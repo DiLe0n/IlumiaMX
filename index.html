@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diseñador de Neón</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Dancing+Script:wght@700&family=Satisfy&family=Permanent+Marker&family=Sacramento&family=Great+Vibes&family=Lobster&family=Abril+Fatface&family=Righteous&family=Orbitron:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f2f0ec; --panel:#fff; --panel2:#f7f5f2;
+  --border:#e4e0da; --border2:#ccc8c1;
+  --accent:#d93b3e; --text:#1a1918; --muted:#8a8680;
+  --r:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;display:flex;flex-direction:column;}
+
+/* HEADER */
+header{height:52px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:var(--panel);border-bottom:1px solid var(--border);}
+.logo{font-size:.9rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;}
+.logo em{color:var(--accent);font-style:normal;}
+.header-mid{font-size:.6rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--muted);}
+.dots{display:flex;gap:5px;}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--border2);transition:.3s;}
+.dot.on{background:var(--accent);transform:scale(1.2);}
+
+/* LAYOUT */
+.layout{flex:1;display:grid;grid-template-columns:305px 1fr;overflow:hidden;min-height:0;}
+
+/* SIDEBAR */
+.sidebar{background:var(--panel);border-right:1px solid var(--border);overflow-y:auto;overflow-x:hidden;}
+.sidebar::-webkit-scrollbar{width:3px;}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+.block{padding:14px 16px;border-bottom:1px solid var(--border);}
+.bhead{display:flex;align-items:center;gap:7px;margin-bottom:10px;}
+.num{width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;font-size:.55rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.blabel{font-size:.58rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);}
+
+/* Textarea */
+textarea{width:100%;background:var(--panel2);border:1.5px solid var(--border);border-radius:7px;color:var(--text);font-size:.9rem;padding:9px 11px;resize:none;height:72px;font-family:inherit;outline:none;transition:border-color .18s;line-height:1.5;}
+textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.09);}
+.char-row{display:flex;justify-content:space-between;margin-top:5px;font-size:.58rem;color:var(--muted);}
+
+/* Font grid */
+.font-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.fbtn{background:var(--panel2);border:1.5px solid var(--border);border-radius:7px;height:42px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.92rem;color:var(--text);transition:all .15s;overflow:hidden;padding:0 5px;}
+.fbtn:hover{border-color:var(--accent);background:rgba(217,59,62,.04);}
+.fbtn.on{border-color:var(--accent);background:rgba(217,59,62,.09);color:var(--accent);}
+
+/* Color swatches */
+.color-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;}
+.cswatch{aspect-ratio:1;border-radius:50%;cursor:pointer;border:2.5px solid transparent;transition:all .15s;box-shadow:0 1px 4px rgba(0,0,0,.14);}
+.cswatch:hover{transform:scale(1.14);}
+.cswatch.on{border-color:#111;transform:scale(1.12);box-shadow:0 0 0 3px rgba(0,0,0,.11);}
+.clabel{font-size:.62rem;color:var(--muted);text-align:center;margin-top:6px;}
+
+/* Wall grid */
+.wall-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;}
+.wbtn{
+  aspect-ratio:.75;          /* portrait-ish so interior shows well */
+  border-radius:7px;cursor:pointer;
+  border:2.5px solid transparent;
+  overflow:hidden;position:relative;
+  background-size:cover;background-position:center top;
+  transition:all .18s;
+}
+.wbtn:hover{transform:scale(1.04);box-shadow:0 4px 14px rgba(0,0,0,.25);}
+.wbtn.on{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.22);}
+.wbtn span{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:3px 4px 4px;
+  background:linear-gradient(transparent,rgba(0,0,0,.7));
+  font-size:.48rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.3px;color:rgba(255,255,255,.95);text-align:center;
+}
+
+/* Mount grid */
+.mount-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.mbtn{background:var(--panel2);border:1.5px solid var(--border);border-radius:7px;padding:9px 6px;cursor:pointer;text-align:center;font-size:.62rem;font-weight:600;color:var(--muted);font-family:inherit;line-height:1.4;transition:all .15s;}
+.mbtn:hover{border-color:var(--accent);color:var(--text);}
+.mbtn.on{border-color:var(--accent);color:var(--accent);background:rgba(217,59,62,.07);}
+.mico{font-size:1.15rem;display:block;margin-bottom:2px;}
+
+/* Toggles */
+.extras{display:flex;flex-direction:column;gap:10px;}
+.trow{display:flex;justify-content:space-between;align-items:center;}
+.tname{font-size:.75rem;font-weight:600;color:var(--text);}
+.tdesc{font-size:.6rem;color:var(--muted);margin-top:1px;}
+.toggle{position:relative;width:38px;height:21px;cursor:pointer;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.tslider{position:absolute;inset:0;background:var(--border2);border-radius:21px;transition:.25s;}
+.tslider::before{content:'';position:absolute;left:3px;top:3px;width:15px;height:15px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:.25s;}
+.toggle input:checked+.tslider{background:var(--accent);}
+.toggle input:checked+.tslider::before{transform:translateX(17px);}
+
+/* ── PREVIEW ── */
+.preview-col{display:flex;flex-direction:column;overflow:hidden;min-height:0;}
+.preview-bar{height:44px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 18px;background:var(--panel);border-bottom:1px solid var(--border);gap:8px;}
+.bar-label{font-size:.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+.bar-actions{display:flex;gap:6px;}
+.ibtn{background:var(--panel2);border:1.5px solid var(--border);border-radius:6px;padding:5px 11px;font-size:.65rem;font-weight:600;font-family:inherit;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .15s;}
+.ibtn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* Canvas */
+.preview-canvas{flex:1;min-height:0;position:relative;overflow:hidden;background-size:cover;background-position:center;cursor:default;}
+.canvas-overlay{position:absolute;inset:0;background:rgba(0,0,0,.38);pointer-events:none;z-index:1;transition:background .3s;}
+
+/* ── THE SIGN (draggable + resizable) ── */
+#signWrapper{
+  position:absolute;
+  z-index:10;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  cursor:grab;
+  user-select:none;
+  touch-action:none;
+}
+#signWrapper:active{cursor:grabbing;}
+
+/* Mount: backing plate */
+#mountPlate{
+  position:absolute;
+  inset:-18px -22px;
+  border-radius:14px;
+  transition:all .4s;
+  pointer-events:none;
+  opacity:0;
+}
+
+/* Mount: wire / chain / stand */
+#mountHook{
+  position:absolute;
+  left:50%;
+  transform:translateX(-50%);
+  pointer-events:none;
+  display:none;
+  z-index:-1;
+}
+#mountBase{
+  position:absolute;
+  left:50%;bottom:-30px;
+  transform:translateX(-50%);
+  pointer-events:none;
+  display:none;
+  z-index:-1;
+}
+#mountScrews{
+  position:absolute;
+  inset:-6px -8px;
+  pointer-events:none;
+  display:none;
+}
+.screw{
+  position:absolute;
+  width:9px;height:9px;
+  border-radius:50%;
+  background:#aaa;
+  border:2px solid #777;
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.5),0 1px 3px rgba(0,0,0,.4);
+}
+.screw::after{
+  content:'';position:absolute;inset:1px;
+  background:linear-gradient(135deg,#999 40%,#666);
+  border-radius:50%;
+}
+
+#neonText{
+  display:block;
+  text-align:center;
+  line-height:1.2;
+  white-space:pre-wrap;
+  word-break:break-word;
+  padding:16px 28px;
+  min-width:80px;
+  min-height:40px;
+  pointer-events:none;
+  transition:font-family .15s, font-size .15s, color .2s, text-shadow .2s;
+}
+
+/* Resize handle */
+#resizeHandle{
+  position:absolute;
+  bottom:-8px;right:-8px;
+  width:22px;height:22px;
+  background:var(--accent);
+  border-radius:50%;
+  cursor:se-resize;
+  border:2.5px solid #fff;
+  box-shadow:0 2px 8px rgba(0,0,0,.35);
+  display:flex;align-items:center;justify-content:center;
+  z-index:20;
+  transition:transform .15s;
+}
+#resizeHandle:hover{transform:scale(1.2);}
+#resizeHandle svg{width:10px;height:10px;fill:#fff;}
+
+/* Size hint tooltip */
+#sizeHint{
+  position:absolute;
+  top:-28px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.7);color:#fff;
+  font-size:.6rem;font-weight:700;letter-spacing:.5px;
+  padding:3px 8px;border-radius:5px;
+  white-space:nowrap;pointer-events:none;
+  opacity:0;transition:opacity .2s;
+}
+#signWrapper:hover #sizeHint{opacity:1;}
+
+/* Dim badge */
+.dim-badge{position:absolute;bottom:12px;right:14px;z-index:3;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.14);border-radius:5px;padding:4px 10px;font-size:.63rem;font-weight:600;color:rgba(255,255,255,.65);backdrop-filter:blur(5px);letter-spacing:.3px;}
+
+/* Scroll hint */
+.scroll-hint{position:absolute;bottom:12px;left:14px;z-index:3;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.1);border-radius:5px;padding:4px 9px;font-size:.58rem;color:rgba(255,255,255,.5);backdrop-filter:blur(4px);pointer-events:none;}
+
+/* Flicker */
+@keyframes flicker{0%,93%,100%{opacity:1;}94%{opacity:.7;}95%{opacity:1;}97%{opacity:.42;}98%{opacity:1;}}
+.flicker{animation:flicker 5s infinite;}
+
+/* Dimmer opacity */
+.dimmed{opacity:.55;}
+
+/* Outdoor: rain drops overlay */
+#rainCanvas{position:absolute;inset:0;pointer-events:none;z-index:5;display:none;}
+
+/* RGB badge glow pulse */
+@keyframes rgbPulse{0%{box-shadow:0 0 0 0 rgba(255,60,172,.6);}70%{box-shadow:0 0 0 10px rgba(255,60,172,0);}100%{box-shadow:0 0 0 0 rgba(255,60,172,0);}}
+
+/* Brick texture for acrylic backing */
+@keyframes fadeInUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">ILUMIA<em>MX</em></div>
+  <div class="header-mid">Diseñador de Letreros</div>
+  <div class="dots">
+    <div class="dot on" id="d1"></div><div class="dot" id="d2"></div>
+    <div class="dot" id="d3"></div><div class="dot" id="d4"></div>
+    <div class="dot" id="d5"></div><div class="dot" id="d6"></div>
+  </div>
+</header>
+
+<div class="layout">
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar">
+
+  <!-- 1 Texto -->
+  <div class="block">
+    <div class="bhead"><span class="num">1</span><span class="blabel">Tu Texto</span></div>
+    <textarea id="textInput" placeholder="Escribe tu texto aquí&#10;(Enter = nueva línea)">Hello World</textarea>
+    <div class="char-row"><span id="charCount">11 caracteres</span><span>Máx. 60</span></div>
+  </div>
+
+  <!-- 2 Fuente -->
+  <div class="block">
+    <div class="bhead"><span class="num">2</span><span class="blabel">Tipografía</span></div>
+    <div class="font-grid" id="fontGrid">
+      <div class="fbtn on"   data-font="Pacifico"          style="font-family:'Pacifico'">Pacifico</div>
+      <div class="fbtn"      data-font="Dancing Script"    style="font-family:'Dancing Script'">Dancing</div>
+      <div class="fbtn"      data-font="Satisfy"           style="font-family:'Satisfy'">Satisfy</div>
+      <div class="fbtn"      data-font="Permanent Marker"  style="font-family:'Permanent Marker'">Marker</div>
+      <div class="fbtn"      data-font="Sacramento"        style="font-family:'Sacramento';font-size:1.1rem">Sacramento</div>
+      <div class="fbtn"      data-font="Great Vibes"       style="font-family:'Great Vibes';font-size:1.1rem">Great Vibes</div>
+      <div class="fbtn"      data-font="Lobster"           style="font-family:'Lobster'">Lobster</div>
+      <div class="fbtn"      data-font="Abril Fatface"     style="font-family:'Abril Fatface'">Abril</div>
+      <div class="fbtn"      data-font="Righteous"         style="font-family:'Righteous'">Righteous</div>
+      <div class="fbtn"      data-font="Orbitron"          style="font-family:'Orbitron';font-size:.68rem">ORBITRON</div>
+    </div>
+  </div>
+
+  <!-- 3 Color -->
+  <div class="block">
+    <div class="bhead"><span class="num">3</span><span class="blabel">Color del Neón</span></div>
+    <div class="color-grid" id="colorGrid">
+      <div class="cswatch on" style="background:#fff"    data-c="#fff"    data-n="Blanco"></div>
+      <div class="cswatch"    style="background:#ffe8b0" data-c="#ffe8b0" data-n="Cálido"></div>
+      <div class="cswatch"    style="background:#ff3cac" data-c="#ff3cac" data-n="Rosa"></div>
+      <div class="cswatch"    style="background:#ffb3d9" data-c="#ffb3d9" data-n="Rosa Claro"></div>
+      <div class="cswatch"    style="background:#3b82f6" data-c="#3b82f6" data-n="Azul"></div>
+      <div class="cswatch"    style="background:#b3f0ff" data-c="#b3f0ff" data-n="Azul Hielo"></div>
+      <div class="cswatch"    style="background:#00f5ff" data-c="#00f5ff" data-n="Turquesa"></div>
+      <div class="cswatch"    style="background:#00ff88" data-c="#00ff88" data-n="Verde"></div>
+      <div class="cswatch"    style="background:#ff2222" data-c="#ff2222" data-n="Rojo"></div>
+      <div class="cswatch"    style="background:#ff8800" data-c="#ff8800" data-n="Naranja"></div>
+      <div class="cswatch"    style="background:#ffee00" data-c="#ffee00" data-n="Amarillo"></div>
+      <div class="cswatch"    style="background:#bf00ff" data-c="#bf00ff" data-n="Púrpura"></div>
+    </div>
+    <div class="clabel" id="colorLabel">Blanco</div>
+  </div>
+
+  <!-- 4 Pared -->
+  <div class="block">
+    <div class="bhead"><span class="num">4</span><span class="blabel">Pared / Ambiente</span></div>
+    <div class="wall-grid" id="wallGrid">
+        <div class="wbtn on"
+            style="background-image:url('https://images.unsplash.com/photo-1770816306935-d0a08e93d823?w=400&q=80&fit=crop')"
+            data-url="https://images.unsplash.com/photo-1770816306935-d0a08e93d823?w=1400&q=85"
+            data-ov=".25"><span>Local 1</span></div>
+
+        <div class="wbtn"
+            style="background-image:url('https://plus.unsplash.com/premium_photo-1728155006673-887f27d7694f?w=400&q=80&fit=crop')"
+            data-url="https://plus.unsplash.com/premium_photo-1728155006673-887f27d7694f?w=1400&q=85"
+            data-ov=".30"><span>Local 2</span></div>
+
+        <div class="wbtn"
+            style="background-image:url('https://images.unsplash.com/photo-1769501203673-159257ecb72d?w=400&q=80&fit=crop')"
+            data-url="https://images.unsplash.com/photo-1769501203673-159257ecb72d?w=1400&q=85"
+            data-ov=".28"><span>Local 3</span></div>
+
+        <div class="wbtn"
+            style="background-image:url('https://images.unsplash.com/photo-1770646403987-64cf5c08c870?w=400&q=80&fit=crop')"
+            data-url="https://images.unsplash.com/photo-1770646403987-64cf5c08c870?w=1400&q=85"
+            data-ov=".32"><span>Local 4</span></div>
+
+        <div class="wbtn"
+            style="background-image:url('https://images.unsplash.com/photo-1770319675686-ae3b11647bcd?w=400&q=80&fit=crop')"
+            data-url="https://images.unsplash.com/photo-1770319675686-ae3b11647bcd?w=1400&q=85"
+            data-ov=".28"><span>Local 5</span></div>
+
+        <div class="wbtn"
+            style="background-image:url('https://plus.unsplash.com/premium_photo-1683121299733-06eed1e7df79?w=400&q=80&fit=crop')"
+            data-url="https://plus.unsplash.com/premium_photo-1683121299733-06eed1e7df79?w=1400&q=85"
+            data-ov=".35"><span>Local 6</span></div>
+
+        <div class="wbtn"
+            style="background-image:url('https://images.unsplash.com/photo-1526887593587-a307ea5d46b4?w=400&q=80&fit=crop')"
+            data-url="https://images.unsplash.com/photo-1526887593587-a307ea5d46b4?w=1400&q=85"
+            data-ov=".30"><span>Local 7</span></div>
+
+        <div class="wbtn"
+            style="background-image:url('https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&q=80&fit=crop')"
+            data-url="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1400&q=85"
+            data-ov=".28"><span>Hotel Lobby</span></div>
+
+    </div>
+  </div>
+
+  <!-- 5 Montaje -->
+  <div class="block">
+    <div class="bhead"><span class="num">5</span><span class="blabel">Tipo de Montaje</span></div>
+    <div class="mount-grid" id="mountGrid">
+      <button class="mbtn on" data-m="libre">
+        <span class="mico">✨</span>Sin sujeción<br><small style="font-size:.55rem;opacity:.7">Sólo el letrero</small>
+      </button>
+      <button class="mbtn" data-m="tornillos">
+        <span class="mico">🔧</span>Tornillos<br><small style="font-size:.55rem;opacity:.7">Fijado a la pared</small>
+      </button>
+      <button class="mbtn" data-m="colgar">
+        <span class="mico">🪝</span>Para colgar<br><small style="font-size:.55rem;opacity:.7">Cable colgante</small>
+      </button>
+      <button class="mbtn" data-m="base">
+        <span class="mico">🏠</span>Base de mesa<br><small style="font-size:.55rem;opacity:.7">Con soporte</small>
+      </button>
+    </div>
+  </div>
+
+  <!-- 6 Extras -->
+  <div class="block">
+    <div class="bhead"><span class="num">6</span><span class="blabel">Opciones Adicionales</span></div>
+    <div class="extras">
+
+      <div class="trow">
+        <div>
+          <div class="tname">Backing Acrílico</div>
+          <div class="tdesc">Placa trasera translúcida visible en vista previa</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="tBacking"><span class="tslider"></span></label>
+      </div>
+
+      <div class="trow">
+        <div>
+          <div class="tname">RGB Multicolor</div>
+          <div class="tdesc">Ciclo de colores animado, control remoto incluido</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="tRgb"><span class="tslider"></span></label>
+      </div>
+
+      <div class="trow">
+        <div>
+          <div class="tname">Efecto Parpadeo</div>
+          <div class="tdesc">Animación vintage de neón clásico</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="tFlicker"><span class="tslider"></span></label>
+      </div>
+
+      <div class="trow">
+        <div>
+          <div class="tname">Control de Brillo</div>
+          <div class="tdesc">Simula intensidad baja — dimmer físico incluido</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="tDimmer"><span class="tslider"></span></label>
+      </div>
+
+      <div class="trow">
+        <div>
+          <div class="tname">Uso Exterior (IP65)</div>
+          <div class="tdesc">Muestra simulación de lluvia en vista previa</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="tOutdoor"><span class="tslider"></span></label>
+      </div>
+
+      <div class="trow" style="padding-top:10px;border-top:1px solid var(--border);margin-top:2px;">
+        <div>
+          <div class="tname" style="font-size:.85rem;">💡 Neón Encendido</div>
+          <div class="tdesc">Apaga para ver el letrero sin luz</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="tPower" checked><span class="tslider" style="background:var(--accent);"></span></label>
+      </div>
+
+    </div>
+  </div>
+
+</aside>
+
+<!-- ── PREVIEW ── -->
+<div class="preview-col">
+
+  <div class="preview-bar">
+    <div class="bar-label">Vista previa · Arrastra y redimensiona el letrero</div>
+    <div class="bar-actions">
+      <button class="ibtn" id="btnFlicker" onclick="toggleFlicker()">⚡ Parpadeo</button>
+      <button class="ibtn" onclick="resetPosition()">⊙ Centrar</button>
+      <button class="ibtn" onclick="downloadPreview()">⬇ Guardar</button>
+      <button class="ibtn" id="btnShare" onclick="shareDesign()">🔗 Compartir</button>
+    </div>
+  </div>
+
+  <div class="preview-canvas" id="previewCanvas"
+    style="background-image:url('https://images.unsplash.com/photo-1770816306935-d0a08e93d823?w=1400&q=85')">
+
+    <div class="canvas-overlay" id="canvasOverlay"></div>
+
+    <!-- Rain canvas for outdoor mode -->
+    <canvas id="rainCanvas"></canvas>
+
+    <!-- The sign -->
+    <div id="signWrapper">
+      <div id="sizeHint">← arrastra · esquina para redimensionar →</div>
+
+      <!-- Mount accessories (rendered behind text) -->
+      <div id="mountPlate"></div>
+      <div id="mountHook"></div>
+      <div id="mountBase"></div>
+      <div id="mountScrews"></div>
+
+      <div id="neonText" style="font-family:'Pacifico'">Hello World</div>
+
+      <div id="resizeHandle">
+        <svg viewBox="0 0 10 10"><path d="M2 8 L8 2 M5 8 L8 5"/><line x1="2" y1="8" x2="8" y2="2" stroke="white" stroke-width="1.5" stroke-linecap="round"/><line x1="5" y1="8" x2="8" y2="5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+
+    <div class="dim-badge" id="dimBadge">~ 60 × 20 cm</div>
+    <div class="scroll-hint">🖱 Rueda del ratón = redimensionar</div>
+  </div>
+</div>
+
+</div><!-- /layout -->
+
+<script>
+// ─────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────
+const S = {
+  text:'Hello World', font:'Pacifico', color:'#fff',
+  scale:1,           // current scale multiplier for the sign
+  posX:0, posY:0,    // offset from center (px)
+  mount:'libre',
+  backing:false, rgb:false, flicker:false, dimmer:false, outdoor:false, power:true,
+};
+
+const BASE_FONT = 60; // base font size in px at scale=1
+
+// ─────────────────────────────────────────
+// DOM REFS
+// ─────────────────────────────────────────
+const neonEl       = document.getElementById('neonText');
+const signWrapper  = document.getElementById('signWrapper');
+const previewCanvas= document.getElementById('previewCanvas');
+const overlay      = document.getElementById('canvasOverlay');
+const mountPlate   = document.getElementById('mountPlate');
+const mountHook    = document.getElementById('mountHook');
+const mountBase    = document.getElementById('mountBase');
+const mountScrews  = document.getElementById('mountScrews');
+const rainCvs      = document.getElementById('rainCanvas');
+const rainCtx      = rainCvs.getContext('2d');
+
+// ─────────────────────────────────────────
+// TEXT
+// ─────────────────────────────────────────
+document.getElementById('textInput').addEventListener('input', function(){
+  const v = this.value.slice(0,60);
+  this.value = v;
+  S.text = v;
+  document.getElementById('charCount').textContent = v.length+' caracteres';
+  renderNeon();
+  updateDimBadge();
+  dots();
+});
+
+// ─────────────────────────────────────────
+// FONT
+// ─────────────────────────────────────────
+document.getElementById('fontGrid').addEventListener('click', e=>{
+  const b = e.target.closest('.fbtn');
+  if(!b) return;
+  document.querySelectorAll('.fbtn').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+  S.font = b.dataset.font;
+  renderNeon();
+  dots();
+});
+
+// ─────────────────────────────────────────
+// COLOR
+// ─────────────────────────────────────────
+document.getElementById('colorGrid').addEventListener('click', e=>{
+  const s = e.target.closest('.cswatch');
+  if(!s) return;
+  document.querySelectorAll('.cswatch').forEach(x=>x.classList.remove('on'));
+  s.classList.add('on');
+  S.color = s.dataset.c;
+  document.getElementById('colorLabel').textContent = s.dataset.n;
+  renderNeon();
+  dots();
+});
+
+// ─────────────────────────────────────────
+// WALL
+// ─────────────────────────────────────────
+document.getElementById('wallGrid').addEventListener('click', e=>{
+  const b = e.target.closest('.wbtn');
+  if(!b) return;
+  document.querySelectorAll('.wbtn').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+  previewCanvas.style.backgroundImage = `url('${b.dataset.url}')`;
+  overlay.style.background = `rgba(0,0,0,${b.dataset.ov})`;
+  dots();
+});
+
+// ─────────────────────────────────────────
+// MOUNT — visual changes
+// ─────────────────────────────────────────
+document.getElementById('mountGrid').addEventListener('click', e=>{
+  const b = e.target.closest('.mbtn');
+  if(!b) return;
+  document.querySelectorAll('.mbtn').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+  S.mount = b.dataset.m;
+  applyMount();
+  dots();
+});
+
+function applyMount(){
+  // Reset all
+  mountPlate.style.opacity='0';
+  mountHook.style.display='none';
+  mountBase.style.display='none';
+  mountScrews.style.display='none';
+  signWrapper.style.filter='';
+
+  const c = S.color;
+
+  if(S.mount==='libre'){
+    // Just the glowing text, no hardware
+  }
+
+  if(S.mount==='tornillos'){
+    // Show 4 corner screws
+    mountScrews.style.display='block';
+    mountScrews.innerHTML='';
+    const positions=[
+      {top:'-4px',left:'-4px'},{top:'-4px',right:'-4px'},
+      {bottom:'-4px',left:'-4px'},{bottom:'-4px',right:'-4px'},
+    ];
+    positions.forEach(p=>{
+      const sc=document.createElement('div');
+      sc.className='screw';
+      Object.assign(sc.style,p,{position:'absolute'});
+      mountScrews.appendChild(sc);
+    });
+    // subtle plate glow behind
+    mountPlate.style.cssText=`
+      position:absolute;inset:-14px -18px;border-radius:10px;
+      background:rgba(0,0,0,.5);opacity:1;
+      box-shadow:0 0 0 2px rgba(120,120,120,.4);
+    `;
+  }
+
+  if(S.mount==='colgar'){
+    // Show wire/chain from top
+    mountHook.style.cssText=`
+      display:block;
+      position:absolute;
+      left:50%;
+      top:-70px;
+      transform:translateX(-50%);
+      width:2px;
+      height:70px;
+      background:repeating-linear-gradient(to bottom,#aaa 0,#aaa 4px,#888 4px,#888 8px);
+      box-shadow:0 0 4px rgba(0,0,0,.5);
+    `;
+    // plate for hang-effect
+    mountPlate.style.cssText=`
+      position:absolute;inset:-14px -18px;border-radius:10px;
+      background:rgba(10,10,10,.55);opacity:1;
+      box-shadow:0 4px 24px rgba(0,0,0,.6);
+    `;
+  }
+
+  if(S.mount==='base'){
+    mountBase.style.cssText=`
+      display:block;
+      position:absolute;
+      left:50%;
+      bottom:-50px;
+      transform:translateX(-50%);
+      width:60%;
+      text-align:center;
+      pointer-events:none;
+    `;
+    mountBase.innerHTML=`
+      <div style="width:4px;height:36px;background:#888;margin:0 auto;border-radius:2px;box-shadow:0 0 6px rgba(0,0,0,.5);"></div>
+      <div style="width:70%;height:8px;background:#777;margin:0 auto;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.5);"></div>
+      <div style="width:90%;height:5px;background:#666;margin:0 auto;border-radius:3px;box-shadow:0 2px 6px rgba(0,0,0,.4);margin-top:2px;"></div>
+    `;
+    mountPlate.style.cssText=`
+      position:absolute;inset:-14px -18px;border-radius:12px;
+      background:rgba(10,10,10,.5);opacity:1;
+      box-shadow:0 6px 30px rgba(0,0,0,.7);
+    `;
+  }
+}
+
+// ─────────────────────────────────────────
+// EXTRAS — toggles with visual effects
+// ─────────────────────────────────────────
+document.getElementById('tBacking').addEventListener('change', function(){
+  S.backing = this.checked;
+  applyBacking();
+  dots();
+});
+document.getElementById('tRgb').addEventListener('change', function(){
+  S.rgb = this.checked;
+  this.checked ? startRGB() : stopRGB();
+  dots();
+});
+document.getElementById('tFlicker').addEventListener('change', function(){
+  S.flicker = this.checked;
+  neonEl.classList.toggle('flicker', this.checked);
+  dots();
+});
+document.getElementById('tDimmer').addEventListener('change', function(){
+  S.dimmer = this.checked;
+  neonEl.classList.toggle('dimmed', this.checked);
+  dots();
+});
+document.getElementById('tOutdoor').addEventListener('change', function(){
+  S.outdoor = this.checked;
+  rainCvs.style.display = this.checked ? 'block' : 'none';
+  if(this.checked) startRain(); else stopRain();
+  dots();
+});
+document.getElementById('tPower').addEventListener('change', function(){
+  S.power = this.checked;
+  if(this.checked){
+    renderNeon();
+    neonEl.classList.toggle('flicker', S.flicker);
+    neonEl.classList.toggle('dimmed', S.dimmer);
+  } else {
+    neonEl.style.color = 'rgba(80,80,80,.35)';
+    neonEl.style.textShadow = 'none';
+    neonEl.classList.remove('flicker','dimmed');
+  }
+});
+
+function applyBacking(){
+  if(S.backing){
+    mountPlate.style.cssText=`
+      position:absolute;inset:-18px -22px;border-radius:14px;
+      background:rgba(220,220,240,.08);opacity:1;
+      border:1.5px solid rgba(255,255,255,.15);
+      box-shadow:0 0 30px ${S.color}22, 0 0 60px ${S.color}11;
+      backdrop-filter:blur(2px);
+    `;
+  } else {
+    if(S.mount==='libre'){
+      mountPlate.style.opacity='0';
+    } else {
+      applyMount();
+    }
+  }
+}
+
+// ─────────────────────────────────────────
+// RENDER NEON TEXT
+// ─────────────────────────────────────────
+function renderNeon(){
+  neonEl.textContent = S.text || '...';
+  neonEl.style.fontFamily = `'${S.font}'`;
+  const lines = S.text.split('\n');
+  const mx = Math.max(...lines.map(l=>l.length),1);
+  const fs = Math.max(20, Math.min(120, 500/mx));
+  neonEl.style.fontSize = (fs * S.scale)+'px';
+  const c = S.color;
+  neonEl.style.color = c;
+  neonEl.style.textShadow = [
+    `0 0 4px ${c}`,`0 0 10px ${c}`,`0 0 24px ${c}`,
+    `0 0 50px ${c}`,`0 0 90px ${c}88`,`0 0 140px ${c}44`
+  ].join(',');
+  updateDimBadge();
+  if(S.backing) applyBacking();
+}
+
+function updateDimBadge(){
+  // Estimate cm based on sign font size vs canvas
+  const approxW = Math.round(S.scale * 60);
+  const approxH = Math.round(approxW * 0.33);
+  document.getElementById('dimBadge').textContent = `~ ${approxW} × ${approxH} cm`;
+}
+
+// ─────────────────────────────────────────
+// SIGN POSITION — update transform
+// ─────────────────────────────────────────
+function applyTransform(){
+  signWrapper.style.left = `calc(50% + ${S.posX}px)`;
+  signWrapper.style.top  = `calc(50% + ${S.posY}px)`;
+}
+
+function resetPosition(){
+  S.posX=0; S.posY=0; S.scale=1;
+  applyTransform();
+  renderNeon();
+}
+
+// ─────────────────────────────────────────
+// DRAG — letrero (prioridad alta) y fondo
+// ─────────────────────────────────────────
+let dragging=false, dragStartX=0, dragStartY=0, posAtDragX=0, posAtDragY=0;
+let bgDragging=false, bgStartX=0, bgStartY=0, bgAtX=50, bgAtY=50;
+
+// El letrero captura el pointer primero
+signWrapper.addEventListener('pointerdown', e=>{
+  if(e.target.closest('#resizeHandle')) return;
+  dragging=true;
+  dragStartX=e.clientX; dragStartY=e.clientY;
+  posAtDragX=S.posX; posAtDragY=S.posY;
+  signWrapper.setPointerCapture(e.pointerId);
+  e.preventDefault();
+  e.stopPropagation(); // evita que el canvas lo reciba
+});
+signWrapper.addEventListener('pointermove', e=>{
+  if(!dragging) return;
+  S.posX = posAtDragX+(e.clientX-dragStartX);
+  S.posY = posAtDragY+(e.clientY-dragStartY);
+  applyTransform();
+});
+signWrapper.addEventListener('pointerup', ()=>{ dragging=false; });
+
+// El canvas mueve el fondo SOLO si el click no fue en el letrero
+previewCanvas.addEventListener('pointerdown', e=>{
+  if(e.target.closest('#signWrapper')) return; // letrero tiene prioridad
+  bgDragging=true;
+  bgStartX=e.clientX; bgStartY=e.clientY;
+  bgAtX=S.bgX??50; bgAtY=S.bgY??50;
+  previewCanvas.style.cursor='grabbing';
+  previewCanvas.setPointerCapture(e.pointerId);
+});
+previewCanvas.addEventListener('pointermove', e=>{
+  if(!bgDragging) return;
+  const dx = (e.clientX-bgStartX)*0.04;
+  const dy = (e.clientY-bgStartY)*0.04;
+  S.bgX = Math.max(0,Math.min(100, bgAtX-dx));
+  S.bgY = Math.max(0,Math.min(100, bgAtY-dy));
+  previewCanvas.style.backgroundPosition = `${S.bgX}% ${S.bgY}%`;
+});
+previewCanvas.addEventListener('pointerup', ()=>{
+  bgDragging=false;
+  previewCanvas.style.cursor='default';
+});
+
+// ─────────────────────────────────────────
+// RESIZE — drag handle
+// ─────────────────────────────────────────
+const rHandle = document.getElementById('resizeHandle');
+let resizing=false, resizeStartX=0, scaleAtResize=1;
+
+rHandle.addEventListener('pointerdown', e=>{
+  resizing=true;
+  resizeStartX=e.clientX;
+  scaleAtResize=S.scale;
+  rHandle.setPointerCapture(e.pointerId);
+  e.stopPropagation();
+  e.preventDefault();
+});
+
+rHandle.addEventListener('pointermove', e=>{
+  if(!resizing) return;
+  const delta = (e.clientX - resizeStartX) * 0.008;
+  S.scale = Math.max(.3, Math.min(5, scaleAtResize + delta));
+  renderNeon();
+});
+
+rHandle.addEventListener('pointerup', ()=>{ resizing=false; });
+
+// ─────────────────────────────────────────
+// MOUSE WHEEL RESIZE
+// ─────────────────────────────────────────
+previewCanvas.addEventListener('wheel', e=>{
+  e.preventDefault();
+  S.scale = Math.max(.3, Math.min(5, S.scale - e.deltaY * 0.001));
+  renderNeon();
+},{passive:false});
+
+// ─────────────────────────────────────────
+// RGB CYCLING
+// ─────────────────────────────────────────
+const RGB_COLORS=['#ff3cac','#00f5ff','#00ff88','#ffee00','#ff8800','#bf00ff','#3b82f6'];
+let rgbInt=null, ri=0;
+function startRGB(){
+  rgbInt=setInterval(()=>{
+    const c=RGB_COLORS[ri++%RGB_COLORS.length];
+    neonEl.style.color=c;
+    neonEl.style.textShadow=[`0 0 4px ${c}`,`0 0 10px ${c}`,`0 0 24px ${c}`,`0 0 50px ${c}`].join(',');
+  },700);
+}
+function stopRGB(){ clearInterval(rgbInt); renderNeon(); }
+
+// ─────────────────────────────────────────
+// FLICKER toggle button
+// ─────────────────────────────────────────
+function toggleFlicker(){
+  const t=document.getElementById('tFlicker');
+  t.checked=!t.checked;
+  S.flicker=t.checked;
+  neonEl.classList.toggle('flicker',t.checked);
+  dots();
+}
+
+// ─────────────────────────────────────────
+// RAIN (outdoor preview)
+// ─────────────────────────────────────────
+let rainAF=null;
+const drops=[];
+
+function initRain(){
+  const w=previewCanvas.offsetWidth, h=previewCanvas.offsetHeight;
+  rainCvs.width=w; rainCvs.height=h;
+  drops.length=0;
+  for(let i=0;i<120;i++){
+    drops.push({x:Math.random()*w, y:Math.random()*h,
+      len:8+Math.random()*14, speed:6+Math.random()*8,
+      op:.15+Math.random()*.35});
+  }
+}
+
+function drawRain(){
+  const w=rainCvs.width, h=rainCvs.height;
+  rainCtx.clearRect(0,0,w,h);
+  rainCtx.strokeStyle='rgba(180,220,255,.55)';
+  rainCtx.lineWidth=1;
+  drops.forEach(d=>{
+    rainCtx.globalAlpha=d.op;
+    rainCtx.beginPath();
+    rainCtx.moveTo(d.x,d.y);
+    rainCtx.lineTo(d.x+d.len*.18,d.y+d.len);
+    rainCtx.stroke();
+    d.y+=d.speed;
+    d.x+=d.speed*.18;
+    if(d.y>h){ d.y=-d.len; d.x=Math.random()*w; }
+  });
+  rainCtx.globalAlpha=1;
+}
+
+function startRain(){
+  initRain();
+  function loop(){ drawRain(); rainAF=requestAnimationFrame(loop); }
+  loop();
+}
+function stopRain(){
+  cancelAnimationFrame(rainAF);
+  rainCtx.clearRect(0,0,rainCvs.width,rainCvs.height);
+}
+
+// ─────────────────────────────────────────
+// DOWNLOAD
+// ─────────────────────────────────────────
+function downloadPreview(){
+  const cvs=document.createElement('canvas');
+  cvs.width=1400; cvs.height=700;
+  const ctx=cvs.getContext('2d');
+  ctx.fillStyle='#111';
+  ctx.fillRect(0,0,1400,700);
+  const lines=S.text.split('\n');
+  const mx=Math.max(...lines.map(l=>l.length),1);
+  const fs=Math.max(44,Math.min(180,900/mx));
+  ctx.font=`${fs}px ${S.font}`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillStyle=S.color;
+  const lh=fs*1.3, sy=350-((lines.length-1)*lh)/2;
+  lines.forEach((ln,i)=>{
+    ctx.shadowColor=S.color;
+    for(let g=0;g<5;g++){ ctx.shadowBlur=18*(g+1); ctx.fillText(ln,700,sy+i*lh); }
+  });
+  const a=document.createElement('a');
+  a.download='mi-neon.png'; a.href=cvs.toDataURL(); a.click();
+}
+
+// ─────────────────────────────────────────
+// SHARE
+// ─────────────────────────────────────────
+function shareDesign(){
+  const p=new URLSearchParams({t:S.text,f:S.font,c:S.color});
+  const url=location.href.split('?')[0]+'?'+p;
+  navigator.clipboard.writeText(url).then(()=>{
+    const b=document.getElementById('btnShare');
+    b.textContent='✓ ¡Copiado!';
+    setTimeout(()=>b.textContent='🔗 Compartir',2500);
+  });
+}
+
+// ─────────────────────────────────────────
+// PROGRESS DOTS
+// ─────────────────────────────────────────
+function dots(){
+  const checks=[
+    S.text.trim().length>0,
+    S.font!=='Pacifico',
+    S.color!=='#fff',
+    !!document.querySelector('.wbtn.on:not(:first-child)'),
+    S.mount!=='libre',
+    S.backing||S.rgb||S.flicker||S.dimmer||S.outdoor,
+  ];
+  checks.forEach((ok,i)=>document.getElementById('d'+(i+1)).classList.toggle('on',ok));
+  document.getElementById('d1').classList.add('on');
+}
+
+// ─────────────────────────────────────────
+// URL PARAMS
+// ─────────────────────────────────────────
+(function(){
+  const p=new URLSearchParams(location.search);
+  if(p.get('t')){ S.text=p.get('t'); document.getElementById('textInput').value=S.text; }
+  if(p.get('f')) S.font=p.get('f');
+  if(p.get('c')) S.color=p.get('c');
+})();
+
+// ─────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────
+applyTransform();
+renderNeon();
+applyMount();
+dots();
+</script>
+</body>
+</html>
