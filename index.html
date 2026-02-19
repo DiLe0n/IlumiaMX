@@ -82,7 +82,16 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
 .preview-canvas{flex:1;min-height:0;position:relative;overflow:hidden;background-size:cover;background-position:center;cursor:default;}
 .canvas-overlay{position:absolute;inset:0;background:rgba(0,0,0,.38);pointer-events:none;z-index:1;transition:background .3s;}
 
-#signWrapper{position:absolute;z-index:10;top:50%;left:50%;transform:translate(-50%,-50%);transform-origin:center center;cursor:grab;user-select:none;touch-action:none;overflow:visible;}
+#signWrapper{
+  position:absolute;
+  z-index:10;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  transform-origin:center center;
+  cursor:grab;user-select:none;touch-action:none;
+  overflow:visible;
+  width:max-content;   /* ancho dictado por el contenido, nunca por el padre */
+}
 #signWrapper:active{cursor:grabbing;}
 
 #mountPlate{position:absolute;pointer-events:none;opacity:0;}
@@ -92,23 +101,27 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
 .screw{position:absolute;width:9px;height:9px;border-radius:50%;background:#aaa;border:2px solid #777;box-shadow:inset 0 1px 2px rgba(255,255,255,.5),0 1px 3px rgba(0,0,0,.4);}
 .screw::after{content:'';position:absolute;inset:1px;background:linear-gradient(135deg,#999 40%,#666);border-radius:50%;}
 
-/* El canvas acrílico se posiciona detrás del texto */
 #acrylicCanvas{
   position:absolute;
   z-index:1;
   pointer-events:none;
   opacity:0;
   transition:opacity .3s;
-  /* drop-shadow para simular el glow del acrílico iluminado */
-  filter: drop-shadow(0 0 12px rgba(255,255,255,.25));
+  filter:drop-shadow(0 0 12px rgba(255,255,255,.25));
 }
 
+/* neonText: display inline-block + nowrap → el ancho lo dicta el texto,
+   nunca el contenedor padre. El wrapper escala todo uniformemente. */
 #neonText{
-  display:block;text-align:center;line-height:1.2;
-  white-space:pre-wrap;word-break:break-word;
-  padding:16px 28px;min-width:60px;
-  pointer-events:none;position:relative;z-index:2;
-  transition:font-family .15s, color .2s, text-shadow .2s;
+  display:inline-block;
+  text-align:center;
+  line-height:1.2;
+  white-space:pre;
+  padding:16px 28px;
+  pointer-events:none;
+  position:relative;
+  z-index:2;
+  transition:color .2s,text-shadow .2s;
 }
 
 #resizeHandle{position:absolute;bottom:-8px;right:-8px;width:22px;height:22px;background:var(--accent);border-radius:50%;cursor:se-resize;border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:20;transition:transform .15s;}
@@ -128,7 +141,7 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
 #rainCanvas{position:absolute;inset:0;pointer-events:none;z-index:5;display:none;}
 
 /* ═══════ RESPONSIVE ═══════ */
-@media (max-width: 768px) {
+@media (max-width:768px){
   html,body{overflow:hidden;height:100%;}
   header{padding:0 14px;height:46px;}
   .logo{font-size:.75rem;letter-spacing:2px;}
@@ -273,7 +286,6 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
       </div>
     </div>
   </div>
-
   </div>
 </aside>
 
@@ -287,29 +299,22 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
       <button class="ibtn" id="btnShare" onclick="shareDesign()">🔗 <span class="btn-text">Compartir</span></button>
     </div>
   </div>
-
   <div class="preview-canvas" id="previewCanvas"
     style="background-image:url('https://images.unsplash.com/photo-1770816306935-d0a08e93d823?w=1400&q=85')">
     <div class="canvas-overlay" id="canvasOverlay"></div>
     <canvas id="rainCanvas"></canvas>
-
     <div id="signWrapper">
       <div id="sizeHint">← arrastra · esquina para redimensionar →</div>
       <div id="mountPlate"></div>
       <div id="mountHook"></div>
       <div id="mountBase"></div>
       <div id="mountScrews"></div>
-
-      <!-- Canvas que dibuja el acrílico con silueta de texto -->
       <canvas id="acrylicCanvas"></canvas>
-
       <div id="neonText" style="font-family:'Pacifico'">Hello World</div>
-
       <div id="resizeHandle">
         <svg viewBox="0 0 10 10"><line x1="2" y1="8" x2="8" y2="2" stroke="white" stroke-width="1.5" stroke-linecap="round"/><line x1="5" y1="8" x2="8" y2="5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
       </div>
     </div>
-
     <div class="dim-badge" id="dimBadge">~ 60 × 20 cm</div>
     <div class="scroll-hint" id="scrollHint">🖱 Rueda del ratón = redimensionar</div>
   </div>
@@ -326,7 +331,6 @@ const S = {
   mount:'libre',
   backing:false, rgb:false, flicker:false, dimmer:false, outdoor:false, power:true,
 };
-const BASE_FS = 72; // font-size base en px
 
 // ════════════════════════════════════════
 // DOM REFS
@@ -345,55 +349,70 @@ const acrylicCvs    = document.getElementById('acrylicCanvas');
 const acrylicCtx    = acrylicCvs.getContext('2d');
 
 // ════════════════════════════════════════
+// FONT-SIZE DINÁMICO
+// El tamaño base se calcula según el ancho real del canvas y la
+// longitud del texto, para que en móvil NUNCA desborde ni se deforme.
+// S.scale es el "zoom" manual del usuario encima de este tamaño base.
+// ════════════════════════════════════════
+function calcBaseFontSize() {
+  const cw = previewCanvas.offsetWidth  || 800;
+  const ch = previewCanvas.offsetHeight || 400;
+
+  const lines  = (S.text || 'A').split('\n');
+  const maxLen = Math.max(...lines.map(l => l.length), 1);
+
+  // Fuentes script/display tienen ~0.58 de avance por carácter a 1px
+  const fsFromW = (cw * 0.78) / (maxLen * 0.58);
+  // Vertical: el bloque no debe pasar del 65% del alto del canvas
+  const fsFromH = (ch * 0.65) / (lines.length * 1.2);
+
+  // Techo: 72px en desktop, 48px en móvil (canvas < 600px ancho)
+  const fsCeil = cw < 600 ? 48 : 72;
+
+  return Math.max(14, Math.min(fsCeil, fsFromW, fsFromH));
+}
+
+// Variable que guarda el BASE_FS calculado actualmente (lo usan
+// _renderAcrylic y renderNeon para que estén sincronizados)
+let currentFS = 72;
+
+// Recalcula currentFS y re-renderiza. Llamar SOLO cuando cambia
+// el texto o la fuente — NUNCA por resize de ventana.
+function recalcFontSize(){
+  currentFS = calcBaseFontSize();
+  renderNeon();
+}
+
+// ════════════════════════════════════════
 // RGB
 // ════════════════════════════════════════
 const RGB_COLORS = ['#ff3cac','#00f5ff','#00ff88','#ffee00','#ff8800','#bf00ff','#3b82f6'];
-let rgbInt = null, ri = 0;
-let currentRGBColor = RGB_COLORS[0];
-
-function getCurrentRGB(){ return currentRGBColor; }
+let rgbInt = null, ri = 0, currentRGBColor = RGB_COLORS[0];
 
 function startRGB(){
   rgbInt = setInterval(()=>{
     currentRGBColor = RGB_COLORS[ri++ % RGB_COLORS.length];
-    const c = currentRGBColor;
-    neonEl.style.color = c;
-    neonEl.style.textShadow = `0 0 4px ${c},0 0 10px ${c},0 0 24px ${c},0 0 50px ${c}`;
+    neonEl.style.color = currentRGBColor;
+    neonEl.style.textShadow = `0 0 4px ${currentRGBColor},0 0 10px ${currentRGBColor},0 0 24px ${currentRGBColor},0 0 50px ${currentRGBColor}`;
     if(S.backing) drawAcrylic();
   }, 700);
 }
 function stopRGB(){ clearInterval(rgbInt); currentRGBColor = RGB_COLORS[0]; renderNeon(); }
 
 // ════════════════════════════════════════
-// ACRYLIC — silueta pixel-perfecta del texto
+// ACRYLIC — anillo que sigue la silueta del texto
 // ════════════════════════════════════════
-
-/*
- Algoritmo:
- 1. Crear canvas offscreen del mismo tamaño que neonEl + padding
- 2. Dibujar las líneas de texto exactamente como las ve CSS
- 3. Dilatar el trazo (blur + threshold) para obtener una silueta expandida
- 4. Pintar el efecto acrílico (dark base + rim glow tintado + reflejo superior)
-    todo recortado a esa silueta
- 5. Copiar al acrylicCvs y posicionarlo sobre neonEl
-*/
-
 let acrylicRaf = null;
 
 function drawAcrylic(){
   if(!S.backing){ acrylicCvs.style.opacity='0'; return; }
-
-  // Esperamos dos frames para que el layout esté actualizado
   cancelAnimationFrame(acrylicRaf);
-  acrylicRaf = requestAnimationFrame(()=> requestAnimationFrame(()=>{
-    _renderAcrylic();
-  }));
+  // Dos frames: 1º DOM actualiza font-size, 2º browser re-calcula offsetWidth/Height
+  acrylicRaf = requestAnimationFrame(()=> requestAnimationFrame(()=> _renderAcrylic()));
 }
 
 function _renderAcrylic(){
   const PAD = 44;
-
-  // — Posición del canvas sobre el neonEl (offsetLeft/Top = coords pre-scale) —
   const nW = neonEl.offsetWidth;
   const nH = neonEl.offsetHeight;
   const nL = neonEl.offsetLeft;
@@ -409,55 +428,46 @@ function _renderAcrylic(){
   acrylicCvs.style.top      = (nT - PAD) + 'px';
   acrylicCvs.style.position = 'absolute';
 
-  // — Dibujar texto replicando EXACTAMENTE el CSS —
-  // CSS del neonEl: font-size:72px, line-height:1.2, padding:16px 28px, textBaseline = alphabetic
-  // En CSS el baseline de la primera línea se ubica en:
-  //   padding-top + half-leading + fontAscent
-  // donde half-leading = (lineHeight - (ascent+descent)) / 2
+  // — Reproducir el texto exactamente como el CSS de neonEl —
+  // CSS: font-size = currentFS px, line-height 1.2, padding 16px 28px
+  const lines   = (S.text || ' ').split('\n');
+  const fs      = currentFS;   // ← usa el mismo fs que renderNeon aplicó
+  const lh      = fs * 1.2;
+
   const off = new OffscreenCanvas(cvW, cvH);
   const ox  = off.getContext('2d');
-  const lines    = (S.text || ' ').split('\n');
-  const fs       = BASE_FS;       // 72px
-  const lh       = fs * 1.2;      // 86.4px
-  const padCssX  = 28;
-  const padCssY  = 16;
-
-  ox.font = `${fs}px '${S.font}', cursive`;
+  ox.font         = `${fs}px '${S.font}', cursive`;
   ox.textAlign    = 'center';
-  ox.textBaseline = 'alphabetic';  // igual que CSS
+  ox.textBaseline = 'alphabetic';
   ox.fillStyle    = '#fff';
 
-  // Medir métricas reales de la fuente para este font/size
-  const met     = ox.measureText('Mg');
-  const ascent  = met.fontBoundingBoxAscent  || fs * 0.78;
-  const descent = met.fontBoundingBoxDescent || fs * 0.22;
-  // Half-leading: espacio repartido arriba y abajo de la caja del font dentro del line-box
+  // Métricas reales de la fuente
+  const met         = ox.measureText('Mg');
+  const ascent      = met.fontBoundingBoxAscent  || fs * 0.78;
+  const descent     = met.fontBoundingBoxDescent || fs * 0.22;
   const halfLeading = (lh - (ascent + descent)) / 2;
 
-  // Baseline de la primera línea en coordenadas del canvas:
-  // PAD (margen canvas) + padCssY (padding-top del neonEl) + halfLeading + ascent
-  const firstBaseline = PAD + padCssY + halfLeading + ascent;
+  // Baseline de la primera línea:
+  // PAD (margen canvas) + 16 (padding-top CSS) + halfLeading + ascent
+  const firstBaseline = PAD + 16 + halfLeading + ascent;
 
   lines.forEach((ln, i) => ox.fillText(ln || ' ', cvW / 2, firstBaseline + i * lh));
 
-  // — Silueta: dilatar el texto → forma exterior —
+  // — Dilatar la silueta —
   function threshold(src, blurR, thr){
     const s = new OffscreenCanvas(cvW, cvH);
     const c = s.getContext('2d');
-    c.filter = `blur(${blurR}px)`;
-    c.drawImage(src, 0, 0);
-    c.filter = 'none';
-    const id = c.getImageData(0, 0, cvW, cvH);
-    const d  = id.data;
+    c.filter = `blur(${blurR}px)`; c.drawImage(src, 0, 0); c.filter = 'none';
+    const id = c.getImageData(0, 0, cvW, cvH), d = id.data;
     for(let i = 3; i < d.length; i += 4) d[i] = d[i] > thr ? 255 : 0;
     c.putImageData(id, 0, 0);
     return s;
   }
 
-  const silOuter = threshold(off,      16,  15);  // dilatar ~14px  → contorno exterior
-  const silInner = threshold(silOuter,  3, 180);  // erosionar ~2px → contorno interior
+  const silOuter = threshold(off,      16,  15);  // dilatado → contorno exterior
+  const silInner = threshold(silOuter,  3, 180);  // erosionado → interior
 
-  // — Anillo gris: silOuter MINUS silInner —
+  // — Anillo: silOuter MINUS silInner —
   const ring = new OffscreenCanvas(cvW, cvH);
   const rc   = ring.getContext('2d');
   const grad = rc.createLinearGradient(0, 0, 0, cvH);
@@ -471,32 +481,28 @@ function _renderAcrylic(){
   rc.globalCompositeOperation = 'destination-out';
   rc.drawImage(silInner, 0, 0);
 
-  // — Solo el anillo. Interior = 100% transparente —
   acrylicCtx.clearRect(0, 0, cvW, cvH);
   acrylicCtx.drawImage(ring, 0, 0);
-
   acrylicCvs.style.filter  = 'drop-shadow(0 4px 14px rgba(0,0,0,0.48))';
   acrylicCvs.style.opacity = '1';
-}
-
-
-// Convierte hex a rgba con alpha
-function hexToRgba(hex, alpha){
-  let h = hex.replace('#','');
-  if(h.length === 3) h = h.split('').map(c=>c+c).join('');
-  const r = parseInt(h.slice(0,2),16);
-  const g = parseInt(h.slice(2,4),16);
-  const b = parseInt(h.slice(4,6),16);
-  return `rgba(${r},${g},${b},${alpha})`;
 }
 
 // ════════════════════════════════════════
 // RENDER NEON TEXT
 // ════════════════════════════════════════
 function renderNeon(){
-  neonEl.textContent = S.text || ' ';
+  // Aplica currentFS tal como está — solo se recalcula cuando
+  // el usuario cambia el texto o la fuente (no en resize)
+  neonEl.textContent      = S.text || ' ';
   neonEl.style.fontFamily = `'${S.font}', cursive`;
-  neonEl.style.fontSize   = BASE_FS + 'px';
+  neonEl.style.fontSize   = currentFS + 'px';
+
+  // 2. Posición: left/top marcan el centro, transform solo aplica scale
+  //    NO incluimos translate del posX/posY en transform para evitar
+  //    conflictos con applyTransform()
+  signWrapper.style.left      = `calc(50% + ${S.posX}px)`;
+  signWrapper.style.top       = `calc(50% + ${S.posY}px)`;
+  signWrapper.style.transform = `translate(-50%,-50%) scale(${S.scale})`;
 
   if(!S.power){
     neonEl.style.color = '#5a5a5a';
@@ -505,132 +511,119 @@ function renderNeon(){
     return;
   }
 
-  const c = (S.rgb && rgbInt) ? getCurrentRGB() : S.color;
+  const c = (S.rgb && rgbInt) ? currentRGBColor : S.color;
   neonEl.style.color = c;
   neonEl.style.textShadow = `0 0 5px ${c},0 0 10px ${c},0 0 20px ${c},0 0 40px ${c},0 0 80px ${c}`;
-
-  signWrapper.style.transform =
-    `translate(-50%,-50%) translate(${S.posX}px,${S.posY}px) scale(${S.scale})`;
 
   if(S.backing) drawAcrylic();
 }
 
 function updateDimBadge(){
   const cmW = Math.round(40 * S.scale);
-  const cmH = Math.round(cmW * .38);
-  document.getElementById('dimBadge').textContent = `~ ${cmW} × ${cmH} cm`;
+  document.getElementById('dimBadge').textContent = `~ ${cmW} × ${Math.round(cmW*.38)} cm`;
 }
+
+// ════════════════════════════════════════
+// POSITION
+// ════════════════════════════════════════
+function applyTransform(){
+  signWrapper.style.left      = `calc(50% + ${S.posX}px)`;
+  signWrapper.style.top       = `calc(50% + ${S.posY}px)`;
+  signWrapper.style.transform = `translate(-50%,-50%) scale(${S.scale})`;
+}
+function resetPosition(){ S.posX=0; S.posY=0; S.scale=1; renderNeon(); updateDimBadge(); }
 
 // ════════════════════════════════════════
 // MOUNT
 // ════════════════════════════════════════
 function applyMount(){
-  mountPlate.style.cssText = '';
-  mountHook.style.display  = 'none';
-  mountBase.style.display  = 'none';
-  mountScrews.style.display = 'none';
-
-  if(S.mount === 'tornillos'){
-    mountScrews.style.display = 'block';
-    mountScrews.innerHTML = '';
+  mountPlate.style.cssText=''; mountHook.style.display='none';
+  mountBase.style.display='none'; mountScrews.style.display='none';
+  if(S.mount==='tornillos'){
+    mountScrews.style.display='block'; mountScrews.innerHTML='';
     [{top:'-4px',left:'-4px'},{top:'-4px',right:'-4px'},
      {bottom:'-4px',left:'-4px'},{bottom:'-4px',right:'-4px'}].forEach(p=>{
-      const sc = document.createElement('div'); sc.className = 'screw';
-      Object.assign(sc.style, p, {position:'absolute'}); mountScrews.appendChild(sc);
+      const sc=document.createElement('div'); sc.className='screw';
+      Object.assign(sc.style,p,{position:'absolute'}); mountScrews.appendChild(sc);
     });
-    mountPlate.style.cssText = 'position:absolute;inset:-14px -18px;border-radius:10px;background:rgba(0,0,0,.5);opacity:1;box-shadow:0 0 0 2px rgba(120,120,120,.4);';
+    mountPlate.style.cssText='position:absolute;inset:-14px -18px;border-radius:10px;background:rgba(0,0,0,.5);opacity:1;box-shadow:0 0 0 2px rgba(120,120,120,.4);';
   }
-  if(S.mount === 'colgar'){
-    mountHook.style.cssText = 'display:block;position:absolute;left:50%;top:-70px;transform:translateX(-50%);width:2px;height:70px;background:repeating-linear-gradient(to bottom,#aaa 0,#aaa 4px,#888 4px,#888 8px);box-shadow:0 0 4px rgba(0,0,0,.5);';
-    mountPlate.style.cssText = 'position:absolute;inset:-14px -18px;border-radius:10px;background:rgba(10,10,10,.55);opacity:1;box-shadow:0 4px 24px rgba(0,0,0,.6);';
+  if(S.mount==='colgar'){
+    mountHook.style.cssText='display:block;position:absolute;left:50%;top:-70px;transform:translateX(-50%);width:2px;height:70px;background:repeating-linear-gradient(to bottom,#aaa 0,#aaa 4px,#888 4px,#888 8px);box-shadow:0 0 4px rgba(0,0,0,.5);';
+    mountPlate.style.cssText='position:absolute;inset:-14px -18px;border-radius:10px;background:rgba(10,10,10,.55);opacity:1;box-shadow:0 4px 24px rgba(0,0,0,.6);';
   }
-  if(S.mount === 'base'){
-    mountBase.style.cssText = 'display:block;position:absolute;left:50%;bottom:-50px;transform:translateX(-50%);width:60%;text-align:center;pointer-events:none;';
-    mountBase.innerHTML = '<div style="width:4px;height:36px;background:#888;margin:0 auto;border-radius:2px;box-shadow:0 0 6px rgba(0,0,0,.5);"></div><div style="width:70%;height:8px;background:#777;margin:0 auto;border-radius:4px;"></div><div style="width:90%;height:5px;background:#666;margin:0 auto;border-radius:3px;margin-top:2px;"></div>';
-    mountPlate.style.cssText = 'position:absolute;inset:-14px -18px;border-radius:12px;background:rgba(10,10,10,.5);opacity:1;box-shadow:0 6px 30px rgba(0,0,0,.7);';
+  if(S.mount==='base'){
+    mountBase.style.cssText='display:block;position:absolute;left:50%;bottom:-50px;transform:translateX(-50%);width:60%;text-align:center;pointer-events:none;';
+    mountBase.innerHTML='<div style="width:4px;height:36px;background:#888;margin:0 auto;border-radius:2px;box-shadow:0 0 6px rgba(0,0,0,.5);"></div><div style="width:70%;height:8px;background:#777;margin:0 auto;border-radius:4px;"></div><div style="width:90%;height:5px;background:#666;margin:0 auto;border-radius:3px;margin-top:2px;"></div>';
+    mountPlate.style.cssText='position:absolute;inset:-14px -18px;border-radius:12px;background:rgba(10,10,10,.5);opacity:1;box-shadow:0 6px 30px rgba(0,0,0,.7);';
   }
 }
 
 // ════════════════════════════════════════
-// POSITION / TRANSFORM
-// ════════════════════════════════════════
-function applyTransform(){
-  signWrapper.style.left = `calc(50% + ${S.posX}px)`;
-  signWrapper.style.top  = `calc(50% + ${S.posY}px)`;
-}
-function resetPosition(){ S.posX=0; S.posY=0; S.scale=1; applyTransform(); renderNeon(); }
-
-if(window.ResizeObserver){
-  new ResizeObserver(()=>{ renderNeon(); }).observe(previewCanvas);
-}
-
-// ════════════════════════════════════════
-// DRAG SIGN
+// DRAG — letrero
 // ════════════════════════════════════════
 let dragging=false, dragStartX=0, dragStartY=0, posAtDragX=0, posAtDragY=0;
-signWrapper.addEventListener('pointerdown', e=>{
+signWrapper.addEventListener('pointerdown',e=>{
   if(e.target.closest('#resizeHandle')) return;
   dragging=true; dragStartX=e.clientX; dragStartY=e.clientY;
   posAtDragX=S.posX; posAtDragY=S.posY;
   signWrapper.setPointerCapture(e.pointerId); e.preventDefault(); e.stopPropagation();
 });
-signWrapper.addEventListener('pointermove', e=>{
+signWrapper.addEventListener('pointermove',e=>{
   if(!dragging) return;
-  S.posX = posAtDragX+(e.clientX-dragStartX);
-  S.posY = posAtDragY+(e.clientY-dragStartY);
+  S.posX=posAtDragX+(e.clientX-dragStartX);
+  S.posY=posAtDragY+(e.clientY-dragStartY);
   applyTransform();
 });
-signWrapper.addEventListener('pointerup', ()=>{ dragging=false; });
+signWrapper.addEventListener('pointerup',()=>{ dragging=false; });
 
-// ════════════════════════════════════════
-// DRAG BACKGROUND
-// ════════════════════════════════════════
+// DRAG — fondo
 let bgDragging=false, bgStartX=0, bgStartY=0, bgAtX=50, bgAtY=50;
-previewCanvas.addEventListener('pointerdown', e=>{
+previewCanvas.addEventListener('pointerdown',e=>{
   if(e.target.closest('#signWrapper')) return;
   bgDragging=true; bgStartX=e.clientX; bgStartY=e.clientY; bgAtX=S.bgX; bgAtY=S.bgY;
   previewCanvas.style.cursor='grabbing'; previewCanvas.setPointerCapture(e.pointerId);
 });
-previewCanvas.addEventListener('pointermove', e=>{
+previewCanvas.addEventListener('pointermove',e=>{
   if(!bgDragging) return;
-  S.bgX = Math.max(0,Math.min(100,bgAtX-(e.clientX-bgStartX)*.04));
-  S.bgY = Math.max(0,Math.min(100,bgAtY-(e.clientY-bgStartY)*.04));
-  previewCanvas.style.backgroundPosition = `${S.bgX}% ${S.bgY}%`;
+  S.bgX=Math.max(0,Math.min(100,bgAtX-(e.clientX-bgStartX)*.04));
+  S.bgY=Math.max(0,Math.min(100,bgAtY-(e.clientY-bgStartY)*.04));
+  previewCanvas.style.backgroundPosition=`${S.bgX}% ${S.bgY}%`;
 });
-previewCanvas.addEventListener('pointerup', ()=>{ bgDragging=false; previewCanvas.style.cursor='default'; });
+previewCanvas.addEventListener('pointerup',()=>{ bgDragging=false; previewCanvas.style.cursor='default'; });
 
 // ════════════════════════════════════════
-// RESIZE HANDLE
+// RESIZE
 // ════════════════════════════════════════
-const rHandle = document.getElementById('resizeHandle');
+const rHandle=document.getElementById('resizeHandle');
 let resizing=false, resizeStartX=0, scaleAtResize=1;
-rHandle.addEventListener('pointerdown', e=>{ resizing=true; resizeStartX=e.clientX; scaleAtResize=S.scale; rHandle.setPointerCapture(e.pointerId); e.stopPropagation(); e.preventDefault(); });
-rHandle.addEventListener('pointermove', e=>{ if(!resizing) return; S.scale=Math.max(.15,Math.min(3,scaleAtResize+(e.clientX-resizeStartX)*.006)); renderNeon(); updateDimBadge(); });
-rHandle.addEventListener('pointerup', ()=>{ resizing=false; });
+rHandle.addEventListener('pointerdown',e=>{ resizing=true; resizeStartX=e.clientX; scaleAtResize=S.scale; rHandle.setPointerCapture(e.pointerId); e.stopPropagation(); e.preventDefault(); });
+rHandle.addEventListener('pointermove',e=>{ if(!resizing)return; S.scale=Math.max(.15,Math.min(3,scaleAtResize+(e.clientX-resizeStartX)*.006)); renderNeon(); updateDimBadge(); });
+rHandle.addEventListener('pointerup',()=>{ resizing=false; });
 
-previewCanvas.addEventListener('wheel', e=>{ e.preventDefault(); S.scale=Math.max(.15,Math.min(3,S.scale-e.deltaY*.001)); renderNeon(); updateDimBadge(); },{passive:false});
+previewCanvas.addEventListener('wheel',e=>{ e.preventDefault(); S.scale=Math.max(.15,Math.min(3,S.scale-e.deltaY*.001)); renderNeon(); updateDimBadge(); },{passive:false});
 
 // ════════════════════════════════════════
 // PINCH TO ZOOM
 // ════════════════════════════════════════
 let lastPinchDist=null;
 previewCanvas.addEventListener('touchstart',e=>{ if(e.touches.length===2){lastPinchDist=getPinchDist(e.touches);e.preventDefault();} },{passive:false});
-previewCanvas.addEventListener('touchmove',e=>{ if(e.touches.length===2&&lastPinchDist!==null){ const d=getPinchDist(e.touches); S.scale=Math.max(.15,Math.min(3,S.scale+(d-lastPinchDist)*.005)); lastPinchDist=d; renderNeon(); e.preventDefault(); } },{passive:false});
+previewCanvas.addEventListener('touchmove',e=>{ if(e.touches.length===2&&lastPinchDist!==null){ const d=getPinchDist(e.touches); S.scale=Math.max(.15,Math.min(3,S.scale+(d-lastPinchDist)*.005)); lastPinchDist=d; renderNeon(); updateDimBadge(); e.preventDefault(); } },{passive:false});
 previewCanvas.addEventListener('touchend',e=>{ if(e.touches.length<2)lastPinchDist=null; });
-function getPinchDist(t){const dx=t[0].clientX-t[1].clientX,dy=t[0].clientY-t[1].clientY;return Math.sqrt(dx*dx+dy*dy);}
+function getPinchDist(t){return Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);}
 
 // ════════════════════════════════════════
-// EVENT LISTENERS — controles
+// CONTROLS
 // ════════════════════════════════════════
 document.getElementById('textInput').addEventListener('input',function(){
   const v=this.value.slice(0,60); this.value=v; S.text=v;
   document.getElementById('charCount').textContent=v.length+' caracteres';
-  renderNeon(); updateDimBadge(); dots();
+  recalcFontSize(); updateDimBadge(); dots();
 });
 document.getElementById('fontGrid').addEventListener('click',e=>{
   const b=e.target.closest('.fbtn'); if(!b)return;
   document.querySelectorAll('.fbtn').forEach(x=>x.classList.remove('on'));
-  b.classList.add('on'); S.font=b.dataset.font; renderNeon(); dots();
+  b.classList.add('on'); S.font=b.dataset.font; recalcFontSize(); dots();
 });
 document.getElementById('colorGrid').addEventListener('click',e=>{
   const s=e.target.closest('.cswatch'); if(!s)return;
@@ -653,21 +646,12 @@ document.getElementById('mountGrid').addEventListener('click',e=>{
   b.classList.add('on'); S.mount=b.dataset.m; applyMount(); dots();
 });
 
-// Extras
 document.getElementById('tBacking').addEventListener('change',function(){
-  S.backing=this.checked;
-  if(S.backing) drawAcrylic(); else { acrylicCvs.style.opacity='0'; }
-  dots();
+  S.backing=this.checked; if(S.backing) drawAcrylic(); else { acrylicCvs.style.opacity='0'; } dots();
 });
-document.getElementById('tRgb').addEventListener('change',function(){
-  S.rgb=this.checked; this.checked?startRGB():stopRGB(); dots();
-});
-document.getElementById('tFlicker').addEventListener('change',function(){
-  S.flicker=this.checked; neonEl.classList.toggle('flicker',this.checked); dots();
-});
-document.getElementById('tDimmer').addEventListener('change',function(){
-  S.dimmer=this.checked; neonEl.classList.toggle('dimmed',this.checked); dots();
-});
+document.getElementById('tRgb').addEventListener('change',function(){ S.rgb=this.checked; this.checked?startRGB():stopRGB(); dots(); });
+document.getElementById('tFlicker').addEventListener('change',function(){ S.flicker=this.checked; neonEl.classList.toggle('flicker',this.checked); dots(); });
+document.getElementById('tDimmer').addEventListener('change',function(){ S.dimmer=this.checked; neonEl.classList.toggle('dimmed',this.checked); dots(); });
 document.getElementById('tOutdoor').addEventListener('change',function(){
   S.outdoor=this.checked; rainCvs.style.display=this.checked?'block':'none';
   this.checked?startRain():stopRain(); dots();
@@ -731,7 +715,7 @@ function shareDesign(){
 }
 
 // ════════════════════════════════════════
-// DOTS PROGRESS
+// DOTS
 // ════════════════════════════════════════
 function dots(){
   const checks=[
@@ -757,10 +741,8 @@ function initMobileSheet(){
   const tabsEl=document.getElementById('sheetTabs');
   const blocks=document.querySelectorAll('.block[data-tab]');
   const sh=document.getElementById('scrollHint');
-
   handle.style.display='flex'; tabsEl.style.display='flex';
   if(sh) sh.textContent='✌️ Pellizca para redimensionar';
-
   tabsEl.innerHTML='';
   blocks.forEach((b,i)=>{
     const btn=document.createElement('button');
@@ -770,13 +752,12 @@ function initMobileSheet(){
     tabsEl.appendChild(btn);
   });
   switchTab(0);
-
+  if(handle._init) return; handle._init=true;
   handle.addEventListener('click',()=>{ sheetOpen=!sheetOpen; setSheetHeight(sheetOpen?SHEET_HALF:SHEET_COLLAPSED); });
-
   let sheetDragStartY=0, sheetHAtStart=0, sheetDragging=false;
   handle.addEventListener('pointerdown',e=>{ sheetDragging=true; sheetDragStartY=e.clientY; sheetHAtStart=sheetH; handle.setPointerCapture(e.pointerId); e.stopPropagation(); });
-  handle.addEventListener('pointermove',e=>{ if(!sheetDragging)return; const d=sheetDragStartY-e.clientY; setSheetHeight(Math.max(SHEET_COLLAPSED,Math.min(SHEET_FULL,sheetHAtStart+d)),false); });
-  handle.addEventListener('pointerup',e=>{ sheetDragging=false; const snaps=[SHEET_COLLAPSED,SHEET_HALF,SHEET_FULL]; const cl=snaps.reduce((a,b)=>Math.abs(b-sheetH)<Math.abs(a-sheetH)?b:a); setSheetHeight(cl); sheetOpen=cl>SHEET_COLLAPSED; });
+  handle.addEventListener('pointermove',e=>{ if(!sheetDragging)return; setSheetHeight(Math.max(SHEET_COLLAPSED,Math.min(SHEET_FULL,sheetHAtStart+(sheetDragStartY-e.clientY))),false); });
+  handle.addEventListener('pointerup',()=>{ sheetDragging=false; const snaps=[SHEET_COLLAPSED,SHEET_HALF,SHEET_FULL]; const cl=snaps.reduce((a,b)=>Math.abs(b-sheetH)<Math.abs(a-sheetH)?b:a); setSheetHeight(cl); sheetOpen=cl>SHEET_COLLAPSED; });
 }
 
 function setSheetHeight(h,animate=true){
@@ -802,14 +783,17 @@ function switchTab(idx){
 })();
 
 // ════════════════════════════════════════
-// INIT
+// RESIZE OBSERVER
+// Solo actualiza la posición/transform — NO recalcula font-size.
+// El tamaño del texto solo cambia cuando el usuario edita el texto o la fuente.
 // ════════════════════════════════════════
-applyTransform();
-renderNeon();
-applyMount();
-dots();
-initMobileSheet();
+if(window.ResizeObserver){
+  new ResizeObserver(()=> applyTransform()).observe(previewCanvas);
+}
 
+// ════════════════════════════════════════
+// WINDOW RESIZE
+// ════════════════════════════════════════
 window.addEventListener('resize',()=>{
   if(isMobile()){
     initMobileSheet();
@@ -820,7 +804,17 @@ window.addEventListener('resize',()=>{
     document.getElementById('sheetHandle').style.display='none';
     document.getElementById('sheetTabs').style.display='none';
   }
+  // Solo actualiza posición, NO el font-size
+  applyTransform();
 });
+
+// ════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════
+recalcFontSize();  // calcula currentFS según el canvas inicial, luego renderiza
+applyMount();
+dots();
+initMobileSheet();
 </script>
 </body>
 </html>
