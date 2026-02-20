@@ -655,7 +655,6 @@ function _renderAcrylic(){
 // RENDER NEON TEXT
 // ════════════════════════════════════════
 function buildNeonSpans(){
-  // Cada carácter → <span class="nchar"> con sus overrides propios
   neonEl.innerHTML = '';
   const chars = S.text || ' ';
   for(let i = 0; i < chars.length; i++){
@@ -669,8 +668,7 @@ function buildNeonSpans(){
     const sp = document.createElement('span');
     sp.className = 'nchar';
     sp.dataset.idx = i;
-    sp.textContent = ch === ' ' ? '\u00A0' : ch; // preserve space width
-    // Aplicar overrides individuales si existen
+    sp.textContent = ch === ' ' ? '\u00A0' : ch;
     const ov = S.charOverrides[i];
     if(ov){
       if(ov.font) sp.style.fontFamily = `'${ov.font}', cursive`;
@@ -682,8 +680,26 @@ function buildNeonSpans(){
         }
       }
     }
+    // Re-marcar el span activo si el menú está abierto
+    if(i === activeCharIdx) sp.classList.add('selected');
     neonEl.appendChild(sp);
   }
+  // Reposicionar el menú sobre el span recién creado
+  if(activeCharIdx !== null && charMenu.classList.contains('visible')){
+    const freshSpan = neonEl.querySelector(`.nchar[data-idx="${activeCharIdx}"]`);
+    if(freshSpan) _repositionMenu(freshSpan);
+  }
+}
+
+function _repositionMenu(spanEl){
+  const wRect = signWrapper.getBoundingClientRect();
+  const sRect = spanEl.getBoundingClientRect();
+  const sc    = S.scale;
+  const cx    = (sRect.left + sRect.width / 2 - wRect.left) / sc;
+  const ty    = (sRect.top - wRect.top) / sc - 14;
+  charMenu.style.left      = cx + 'px';
+  charMenu.style.top       = ty + 'px';
+  charMenu.style.transform = 'translateX(-50%) translateY(-100%)';
 }
 
 function renderNeon(){
@@ -789,6 +805,8 @@ const COLORS_LIST = [
 ];
 
 const charMenu      = document.getElementById('charMenu');
+// Evitar que pointerdown en el menú llegue al signWrapper (que capturaría el pointer)
+charMenu.addEventListener('pointerdown', e => e.stopPropagation());
 const cmenuFontName = document.getElementById('cmenuFontName');
 const cmenuColorBtn = document.getElementById('cmenuColorBtn');
 const cmenuColorSub = document.getElementById('cmenuColorSub');
@@ -828,16 +846,7 @@ function openCharMenu(spanEl){
   );
   cmenuColorSub.classList.remove('open');
 
-  // Posicionar el menú encima del span
-  const wRect = signWrapper.getBoundingClientRect();
-  const sRect = spanEl.getBoundingClientRect();
-  const sc    = S.scale;
-  const cx    = (sRect.left + sRect.width / 2 - wRect.left) / sc;
-  const ty    = (sRect.top - wRect.top) / sc - 14;
-
-  charMenu.style.left      = cx + 'px';
-  charMenu.style.top       = ty + 'px';
-  charMenu.style.transform = 'translateX(-50%) translateY(-100%)';
+  _repositionMenu(spanEl);
   charMenu.classList.add('visible');
 }
 
@@ -917,7 +926,8 @@ signWrapper.addEventListener('pointermove', () => {
 // DRAG — letrero
 // ════════════════════════════════════════
 let dragging=false, dragStartX=0, dragStartY=0, posAtDragX=0, posAtDragY=0;
-let pointerDownTarget=null;  // guardamos target ANTES de setPointerCapture
+let pointerDownTarget=null;
+let charPointerMoved=false;  // guardamos target ANTES de setPointerCapture
 signWrapper.addEventListener('pointerdown',e=>{
   if(e.target.closest('#resizeHandle')) return;
   pointerDownTarget=e.target;  // el target real (puede ser un .nchar)
