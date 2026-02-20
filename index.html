@@ -118,7 +118,7 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
   line-height:1.2;
   white-space:pre;
   padding:16px 28px;
-  pointer-events:none;
+  pointer-events:auto;
   position:relative;
   z-index:2;
   transition:color .2s,text-shadow .2s;
@@ -172,6 +172,144 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
   .font-grid{grid-template-columns:1fr 1fr;}
   .wall-grid{grid-template-columns:repeat(3,1fr);}
 }
+
+/* ═══ CHAR EDIT ═══ */
+.nchar{
+  display:inline;
+  cursor:pointer;
+  position:relative;
+  transition:text-shadow .15s;
+}
+.nchar.selected{
+  outline:2px solid rgba(255,255,255,.5);
+  outline-offset:3px;
+  border-radius:3px;
+}
+.nchar-nl{ display:block; height:0; }
+
+#charMenu{
+  position:absolute;
+  z-index:100;
+  background:rgba(12,13,18,.95);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:10px;
+  padding:8px 10px;
+  box-shadow:0 8px 28px rgba(0,0,0,.75);
+  backdrop-filter:blur(14px);
+  pointer-events:auto;
+  display:none;
+  white-space:nowrap;
+}
+#charMenu.visible{ display:flex; align-items:center; gap:8px; }
+#charMenu::after{
+  content:'';
+  position:absolute;
+  top:100%; left:50%;
+  transform:translateX(-50%);
+  border:6px solid transparent;
+  border-top-color:rgba(12,13,18,.95);
+}
+
+/* Carrusel de fuentes */
+.cmenu-carousel{
+  display:flex;
+  align-items:center;
+  gap:4px;
+}
+.cmenu-arr{
+  background:none;
+  border:none;
+  color:rgba(255,255,255,.5);
+  font-size:1rem;
+  cursor:pointer;
+  padding:0 2px;
+  line-height:1;
+  transition:color .12s;
+  flex-shrink:0;
+}
+.cmenu-arr:hover{ color:#fff; }
+.cmenu-font-name{
+  font-size:.82rem;
+  color:#fff;
+  min-width:80px;
+  text-align:center;
+  padding:4px 8px;
+  background:rgba(255,255,255,.08);
+  border-radius:6px;
+  border:1px solid rgba(255,255,255,.12);
+  cursor:default;
+}
+
+/* Separador */
+.cmenu-sep{
+  width:1px;
+  height:24px;
+  background:rgba(255,255,255,.12);
+  flex-shrink:0;
+}
+
+/* Swatch de color activo + submenu */
+.cmenu-color-wrap{
+  position:relative;
+}
+.cmenu-color-btn{
+  width:22px; height:22px;
+  border-radius:50%;
+  border:2px solid rgba(255,255,255,.5);
+  cursor:pointer;
+  transition:transform .12s;
+  flex-shrink:0;
+  display:block;
+}
+.cmenu-color-btn:hover{ transform:scale(1.15); }
+.cmenu-color-sub{
+  position:absolute;
+  bottom:calc(100% + 10px);
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(12,13,18,.97);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:10px;
+  padding:8px;
+  display:none;
+  flex-wrap:wrap;
+  gap:6px;
+  width:154px;
+  box-shadow:0 6px 24px rgba(0,0,0,.8);
+}
+.cmenu-color-sub.open{ display:flex; }
+.cmenu-color-sub::after{
+  content:'';
+  position:absolute;
+  top:100%; left:50%;
+  transform:translateX(-50%);
+  border:6px solid transparent;
+  border-top-color:rgba(12,13,18,.97);
+}
+.cmenu-csw{
+  width:20px; height:20px;
+  border-radius:50%;
+  cursor:pointer;
+  border:2px solid transparent;
+  transition:all .12s;
+  flex-shrink:0;
+}
+.cmenu-csw:hover{ transform:scale(1.18); }
+.cmenu-csw.on{ border-color:#fff; transform:scale(1.1); }
+
+/* Reset */
+.cmenu-reset{
+  background:none;
+  border:none;
+  color:rgba(255,255,255,.35);
+  font-size:.85rem;
+  cursor:pointer;
+  padding:0 2px;
+  transition:color .12s;
+  line-height:1;
+  flex-shrink:0;
+}
+.cmenu-reset:hover{ color:rgba(255,100,100,.8); }
 </style>
 </head>
 <body>
@@ -217,20 +355,20 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
   <div class="block" data-tab="Color" data-idx="2">
     <div class="bhead"><span class="num">3</span><span class="blabel">Color del Neón</span></div>
     <div class="color-grid" id="colorGrid">
-      <div class="cswatch on" style="background:#fff"    data-c="#fff"    data-n="Blanco"></div>
-      <div class="cswatch"    style="background:#ffe8b0" data-c="#ffe8b0" data-n="Cálido"></div>
-      <div class="cswatch"    style="background:#ff3cac" data-c="#ff3cac" data-n="Rosa"></div>
-      <div class="cswatch"    style="background:#ffb3d9" data-c="#ffb3d9" data-n="Rosa Claro"></div>
-      <div class="cswatch"    style="background:#3b82f6" data-c="#3b82f6" data-n="Azul"></div>
-      <div class="cswatch"    style="background:#b3f0ff" data-c="#b3f0ff" data-n="Azul Hielo"></div>
-      <div class="cswatch"    style="background:#00f5ff" data-c="#00f5ff" data-n="Turquesa"></div>
+      <div class="cswatch on" style="background:#b3f0ff" data-c="#b3f0ff" data-n="Azul Hielo"></div>
+      <div class="cswatch"    style="background:#ff2222" data-c="#ff2222" data-n="Roja"></div>
+      <div class="cswatch"    style="background:#ffb300" data-c="#ffb300" data-n="Amber"></div>
+      <div class="cswatch"    style="background:#e8ff00" data-c="#e8ff00" data-n="Amarillo Limón"></div>
+      <div class="cswatch"    style="background:#bf00ff" data-c="#bf00ff" data-n="Morado"></div>
       <div class="cswatch"    style="background:#00ff88" data-c="#00ff88" data-n="Verde"></div>
-      <div class="cswatch"    style="background:#ff2222" data-c="#ff2222" data-n="Rojo"></div>
+      <div class="cswatch"    style="background:#39ff14" data-c="#39ff14" data-n="Verde Mars"></div>
+      <div class="cswatch"    style="background:#3b82f6" data-c="#3b82f6" data-n="Azul"></div>
+      <div class="cswatch"    style="background:#ff3cac" data-c="#ff3cac" data-n="Rosa"></div>
+      <div class="cswatch"    style="background:#ffd700" data-c="#ffd700" data-n="Amarillo Dorado"></div>
       <div class="cswatch"    style="background:#ff8800" data-c="#ff8800" data-n="Naranja"></div>
-      <div class="cswatch"    style="background:#ffee00" data-c="#ffee00" data-n="Amarillo"></div>
-      <div class="cswatch"    style="background:#bf00ff" data-c="#bf00ff" data-n="Púrpura"></div>
+      <div class="cswatch"    style="background:#e8f4ff" data-c="#e8f4ff" data-n="Blanca Fría"></div>
     </div>
-    <div class="clabel" id="colorLabel">Blanco</div>
+    <div class="clabel" id="colorLabel">Azul Hielo</div>
   </div>
 
   <div class="block" data-tab="Pared" data-idx="3">
@@ -251,9 +389,9 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
     <div class="bhead"><span class="num">5</span><span class="blabel">Tipo de Montaje</span></div>
     <div class="mount-grid" id="mountGrid">
       <button class="mbtn on" data-m="libre"><span class="mico">✨</span>Sin sujeción<br><small style="font-size:.55rem;opacity:.7">Sólo el letrero</small></button>
-      <button class="mbtn" data-m="tornillos"><span class="mico">🔧</span>Tornillos<br><small style="font-size:.55rem;opacity:.7">Fijado a la pared</small></button>
       <button class="mbtn" data-m="colgar"><span class="mico">🪝</span>Para colgar<br><small style="font-size:.55rem;opacity:.7">Cable colgante</small></button>
-      <button class="mbtn" data-m="base"><span class="mico">🏠</span>Base de mesa<br><small style="font-size:.55rem;opacity:.7">Con soporte</small></button>
+      <button class="mbtn" data-m="acrilico-cuadrado"><span class="mico">⬜</span>Acrílico Cuadrado<br><small style="font-size:.55rem;opacity:.7">Placa rectangular</small></button>
+      <button class="mbtn" data-m="acrilico-redondo"><span class="mico">⭕</span>Acrílico Redondo<br><small style="font-size:.55rem;opacity:.7">Placa circular</small></button>
     </div>
   </div>
 
@@ -276,13 +414,10 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
         <div><div class="tname">Control de Brillo</div><div class="tdesc">Simula intensidad baja — dimmer físico incluido</div></div>
         <label class="toggle"><input type="checkbox" id="tDimmer"><span class="tslider"></span></label>
       </div>
-      <div class="trow">
-        <div><div class="tname">Uso Exterior (IP65)</div><div class="tdesc">Simulación de lluvia en vista previa</div></div>
-        <label class="toggle"><input type="checkbox" id="tOutdoor"><span class="tslider"></span></label>
-      </div>
+
       <div class="trow" style="padding-top:10px;border-top:1px solid var(--border);margin-top:2px;">
         <div><div class="tname" style="font-size:.85rem;">💡 Neón Encendido</div><div class="tdesc">Apaga para ver el letrero sin luz</div></div>
-        <label class="toggle"><input type="checkbox" id="tPower" checked><span class="tslider" style="background:var(--accent);"></span></label>
+        <label class="toggle"><input type="checkbox" id="tPower" checked><span class="tslider"></span></label>
       </div>
     </div>
   </div>
@@ -311,7 +446,24 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
       <div id="mountScrews"></div>
       <canvas id="acrylicCanvas"></canvas>
       <div id="neonText" style="font-family:'Pacifico'">Hello World</div>
-      <div id="resizeHandle">
+      <div id="charMenu">
+  <!-- Carrusel fuente -->
+  <div class="cmenu-carousel">
+    <button class="cmenu-arr" id="cmenuPrev">‹</button>
+    <div class="cmenu-font-name" id="cmenuFontName">Pacifico</div>
+    <button class="cmenu-arr" id="cmenuNext">›</button>
+  </div>
+  <div class="cmenu-sep"></div>
+  <!-- Color -->
+  <div class="cmenu-color-wrap">
+    <div class="cmenu-color-btn" id="cmenuColorBtn"></div>
+    <div class="cmenu-color-sub" id="cmenuColorSub"></div>
+  </div>
+  <div class="cmenu-sep"></div>
+  <!-- Reset -->
+  <button class="cmenu-reset" id="cmenuReset" title="Restablecer">↺</button>
+</div>
+<div id="resizeHandle">
         <svg viewBox="0 0 10 10"><line x1="2" y1="8" x2="8" y2="2" stroke="white" stroke-width="1.5" stroke-linecap="round"/><line x1="5" y1="8" x2="8" y2="5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
       </div>
     </div>
@@ -326,10 +478,11 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
 // STATE
 // ════════════════════════════════════════
 const S = {
-  text:'Hello World', font:'Pacifico', color:'#fff',
+  text:'Hello World', font:'Pacifico', color:'#b3f0ff',
   scale:1, posX:0, posY:0, bgX:50, bgY:50,
   mount:'libre',
-  backing:false, rgb:false, flicker:false, dimmer:false, outdoor:false, power:true,
+  backing:false, rgb:false, flicker:false, dimmer:false, power:true,
+  charOverrides:{},  // idx → {font, color}
 };
 
 // ════════════════════════════════════════
@@ -467,39 +620,78 @@ function _renderAcrylic(){
   const silOuter = threshold(off,      16,  15);  // dilatado → contorno exterior
   const silInner = threshold(silOuter,  3, 180);  // erosionado → interior
 
-  // — Anillo: silOuter MINUS silInner —
+  // — Silueta completa (silOuter) con estilo acrílico translúcido —
   const ring = new OffscreenCanvas(cvW, cvH);
   const rc   = ring.getContext('2d');
-  const grad = rc.createLinearGradient(0, 0, 0, cvH);
-  grad.addColorStop(0,   'rgba(205,207,213,0.95)');
-  grad.addColorStop(0.5, 'rgba(175,177,183,0.95)');
-  grad.addColorStop(1,   'rgba(145,147,153,0.95)');
+  // Gradiente acrílico igual que los montajes de placa
+  const grad = rc.createLinearGradient(0, 0, cvW * 0.7, cvH);
+  grad.addColorStop(0,   'rgba(220,230,245,0.22)');
+  grad.addColorStop(0.5, 'rgba(180,195,220,0.15)');
+  grad.addColorStop(1,   'rgba(200,215,235,0.20)');
   rc.fillStyle = grad;
   rc.fillRect(0, 0, cvW, cvH);
+  // Recortar a la silueta exterior del texto
   rc.globalCompositeOperation = 'destination-in';
   rc.drawImage(silOuter, 0, 0);
-  rc.globalCompositeOperation = 'destination-out';
-  rc.drawImage(silInner, 0, 0);
+
+  // Borde brillante interior: línea blanca translúcida en el borde de la silueta
+  const rim = new OffscreenCanvas(cvW, cvH);
+  const rm  = rim.getContext('2d');
+  rm.fillStyle = 'rgba(255,255,255,0.28)';
+  rm.fillRect(0, 0, cvW, cvH);
+  rm.globalCompositeOperation = 'destination-in';
+  rm.drawImage(silOuter, 0, 0);
+  rm.globalCompositeOperation = 'destination-out';
+  rm.drawImage(silInner, 0, 0);
 
   acrylicCtx.clearRect(0, 0, cvW, cvH);
   acrylicCtx.drawImage(ring, 0, 0);
-  acrylicCvs.style.filter  = 'drop-shadow(0 4px 14px rgba(0,0,0,0.48))';
+  acrylicCtx.drawImage(rim,  0, 0);
+  acrylicCvs.style.filter  = 'drop-shadow(0 4px 20px rgba(0,0,0,0.5))';
   acrylicCvs.style.opacity = '1';
 }
 
 // ════════════════════════════════════════
 // RENDER NEON TEXT
 // ════════════════════════════════════════
+function buildNeonSpans(){
+  // Cada carácter → <span class="nchar"> con sus overrides propios
+  neonEl.innerHTML = '';
+  const chars = S.text || ' ';
+  for(let i = 0; i < chars.length; i++){
+    const ch = chars[i];
+    if(ch === '\n'){
+      const br = document.createElement('span');
+      br.className = 'nchar-nl';
+      neonEl.appendChild(br);
+      continue;
+    }
+    const sp = document.createElement('span');
+    sp.className = 'nchar';
+    sp.dataset.idx = i;
+    sp.textContent = ch === ' ' ? '\u00A0' : ch; // preserve space width
+    // Aplicar overrides individuales si existen
+    const ov = S.charOverrides[i];
+    if(ov){
+      if(ov.font) sp.style.fontFamily = `'${ov.font}', cursive`;
+      if(ov.color){
+        sp.style.color = ov.color;
+        if(S.power){
+          const c = ov.color;
+          sp.style.textShadow = `0 0 5px ${c},0 0 10px ${c},0 0 20px ${c},0 0 40px ${c},0 0 80px ${c}`;
+        }
+      }
+    }
+    neonEl.appendChild(sp);
+  }
+}
+
 function renderNeon(){
   // Aplica currentFS tal como está — solo se recalcula cuando
   // el usuario cambia el texto o la fuente (no en resize)
-  neonEl.textContent      = S.text || ' ';
   neonEl.style.fontFamily = `'${S.font}', cursive`;
   neonEl.style.fontSize   = currentFS + 'px';
 
-  // 2. Posición: left/top marcan el centro, transform solo aplica scale
-  //    NO incluimos translate del posX/posY en transform para evitar
-  //    conflictos con applyTransform()
   signWrapper.style.left      = `calc(50% + ${S.posX}px)`;
   signWrapper.style.top       = `calc(50% + ${S.posY}px)`;
   signWrapper.style.transform = `translate(-50%,-50%) scale(${S.scale})`;
@@ -507,6 +699,12 @@ function renderNeon(){
   if(!S.power){
     neonEl.style.color = '#5a5a5a';
     neonEl.style.textShadow = 'none';
+    buildNeonSpans();
+    // overrides: sin glow cuando apagado
+    neonEl.querySelectorAll('.nchar').forEach(sp => {
+      sp.style.textShadow = 'none';
+      sp.style.color = '';
+    });
     if(S.backing) drawAcrylic();
     return;
   }
@@ -514,6 +712,8 @@ function renderNeon(){
   const c = (S.rgb && rgbInt) ? currentRGBColor : S.color;
   neonEl.style.color = c;
   neonEl.style.textShadow = `0 0 5px ${c},0 0 10px ${c},0 0 20px ${c},0 0 40px ${c},0 0 80px ${c}`;
+
+  buildNeonSpans();
 
   if(S.backing) drawAcrylic();
 }
@@ -539,43 +739,210 @@ function resetPosition(){ S.posX=0; S.posY=0; S.scale=1; renderNeon(); updateDim
 function applyMount(){
   mountPlate.style.cssText=''; mountHook.style.display='none';
   mountBase.style.display='none'; mountScrews.style.display='none';
-  if(S.mount==='tornillos'){
-    mountScrews.style.display='block'; mountScrews.innerHTML='';
-    [{top:'-4px',left:'-4px'},{top:'-4px',right:'-4px'},
-     {bottom:'-4px',left:'-4px'},{bottom:'-4px',right:'-4px'}].forEach(p=>{
-      const sc=document.createElement('div'); sc.className='screw';
-      Object.assign(sc.style,p,{position:'absolute'}); mountScrews.appendChild(sc);
-    });
-    mountPlate.style.cssText='position:absolute;inset:-14px -18px;border-radius:10px;background:rgba(0,0,0,.5);opacity:1;box-shadow:0 0 0 2px rgba(120,120,120,.4);';
+
+  // Montajes con placa propia ocultan el backing acrílico para evitar sobreposición
+  const hasPlate = ['acrilico-cuadrado','acrilico-redondo','colgar'].includes(S.mount);
+  if(hasPlate && S.backing){
+    acrylicCvs.style.opacity='0';
+  } else if(S.backing){
+    drawAcrylic();
   }
+
   if(S.mount==='colgar'){
     mountHook.style.cssText='display:block;position:absolute;left:50%;top:-70px;transform:translateX(-50%);width:2px;height:70px;background:repeating-linear-gradient(to bottom,#aaa 0,#aaa 4px,#888 4px,#888 8px);box-shadow:0 0 4px rgba(0,0,0,.5);';
-    mountPlate.style.cssText='position:absolute;inset:-14px -18px;border-radius:10px;background:rgba(10,10,10,.55);opacity:1;box-shadow:0 4px 24px rgba(0,0,0,.6);';
+    mountPlate.style.cssText='position:absolute;inset:-18px -22px;border-radius:10px;background:linear-gradient(160deg,rgba(220,230,245,.18) 0%,rgba(180,195,220,.12) 50%,rgba(200,215,235,.16) 100%);opacity:1;backdrop-filter:blur(1px);box-shadow:0 4px 28px rgba(0,0,0,.55),inset 0 0 0 1.5px rgba(255,255,255,.22),inset 0 1px 0 rgba(255,255,255,.35);';
   }
-  if(S.mount==='base'){
-    mountBase.style.cssText='display:block;position:absolute;left:50%;bottom:-50px;transform:translateX(-50%);width:60%;text-align:center;pointer-events:none;';
-    mountBase.innerHTML='<div style="width:4px;height:36px;background:#888;margin:0 auto;border-radius:2px;box-shadow:0 0 6px rgba(0,0,0,.5);"></div><div style="width:70%;height:8px;background:#777;margin:0 auto;border-radius:4px;"></div><div style="width:90%;height:5px;background:#666;margin:0 auto;border-radius:3px;margin-top:2px;"></div>';
-    mountPlate.style.cssText='position:absolute;inset:-14px -18px;border-radius:12px;background:rgba(10,10,10,.5);opacity:1;box-shadow:0 6px 30px rgba(0,0,0,.7);';
+
+  if(S.mount==='acrilico-cuadrado'){
+    mountPlate.style.cssText='position:absolute;inset:-18px -22px;border-radius:10px;background:linear-gradient(160deg,rgba(220,230,245,.18) 0%,rgba(180,195,220,.12) 50%,rgba(200,215,235,.16) 100%);opacity:1;backdrop-filter:blur(1px);box-shadow:0 4px 28px rgba(0,0,0,.55),inset 0 0 0 1.5px rgba(255,255,255,.22),inset 0 1px 0 rgba(255,255,255,.35);';
+  }
+
+  if(S.mount==='acrilico-redondo'){
+    const w=signWrapper.offsetWidth+44, h=signWrapper.offsetHeight+44;
+    const side=Math.max(w,h);
+    const offsetX=(w-side)/2-22, offsetY=(h-side)/2-22;
+    mountPlate.style.cssText='position:absolute;width:'+side+'px;height:'+side+'px;left:'+offsetX+'px;top:'+offsetY+'px;border-radius:50%;background:linear-gradient(160deg,rgba(220,230,245,.18) 0%,rgba(180,195,220,.12) 50%,rgba(200,215,235,.16) 100%);opacity:1;backdrop-filter:blur(1px);box-shadow:0 4px 28px rgba(0,0,0,.55),inset 0 0 0 1.5px rgba(255,255,255,.22),inset 0 1px 0 rgba(255,255,255,.35);';
   }
 }
+
+
+// ════════════════════════════════════════
+// CHAR EDITOR — click en letra → mini menú
+// ════════════════════════════════════════
+const FONTS_LIST = [
+  {k:'Pacifico',   l:'Pacifico'},
+  {k:'Dancing Script', l:'Dancing'},
+  {k:'Satisfy',    l:'Satisfy'},
+  {k:'Permanent Marker', l:'Marker'},
+  {k:'Sacramento', l:'Sacramento'},
+  {k:'Great Vibes',l:'Great Vibes'},
+  {k:'Lobster',    l:'Lobster'},
+  {k:'Abril Fatface',l:'Abril'},
+  {k:'Righteous',  l:'Righteous'},
+  {k:'Orbitron',   l:'ORBITRON'},
+];
+const COLORS_LIST = [
+  {c:'#b3f0ff',n:'Azul Hielo'},{c:'#ff2222',n:'Roja'},{c:'#ffb300',n:'Amber'},
+  {c:'#e8ff00',n:'Amarillo Limón'},{c:'#bf00ff',n:'Morado'},{c:'#00ff88',n:'Verde'},
+  {c:'#39ff14',n:'Verde Mars'},{c:'#3b82f6',n:'Azul'},{c:'#ff3cac',n:'Rosa'},
+  {c:'#ffd700',n:'Amarillo Dorado'},{c:'#ff8800',n:'Naranja'},{c:'#e8f4ff',n:'Blanca Fría'},
+];
+
+const charMenu      = document.getElementById('charMenu');
+const cmenuFontName = document.getElementById('cmenuFontName');
+const cmenuColorBtn = document.getElementById('cmenuColorBtn');
+const cmenuColorSub = document.getElementById('cmenuColorSub');
+let activeCharIdx   = null;
+let cmenuFontIdx    = 0;   // índice actual en FONTS_LIST
+
+// Poblar submenu de colores
+COLORS_LIST.forEach(col => {
+  const sw = document.createElement('div');
+  sw.className = 'cmenu-csw';
+  sw.style.background = col.c;
+  sw.title = col.n;
+  sw.dataset.color = col.c;
+  cmenuColorSub.appendChild(sw);
+});
+
+function openCharMenu(spanEl){
+  const idx = parseInt(spanEl.dataset.idx);
+  activeCharIdx = idx;
+
+  neonEl.querySelectorAll('.nchar.selected').forEach(s => s.classList.remove('selected'));
+  spanEl.classList.add('selected');
+
+  const ov       = S.charOverrides[idx] || {};
+  const curFont  = ov.font  || S.font;
+  const curColor = ov.color || S.color;
+
+  // Posicionar carrusel en la fuente activa
+  cmenuFontIdx = FONTS_LIST.findIndex(f => f.k === curFont);
+  if(cmenuFontIdx < 0) cmenuFontIdx = 0;
+  updateFontCarousel();
+
+  // Color activo
+  cmenuColorBtn.style.background = curColor;
+  cmenuColorSub.querySelectorAll('.cmenu-csw').forEach(s =>
+    s.classList.toggle('on', s.dataset.color === curColor)
+  );
+  cmenuColorSub.classList.remove('open');
+
+  // Posicionar el menú encima del span
+  const wRect = signWrapper.getBoundingClientRect();
+  const sRect = spanEl.getBoundingClientRect();
+  const sc    = S.scale;
+  const cx    = (sRect.left + sRect.width / 2 - wRect.left) / sc;
+  const ty    = (sRect.top - wRect.top) / sc - 14;
+
+  charMenu.style.left      = cx + 'px';
+  charMenu.style.top       = ty + 'px';
+  charMenu.style.transform = 'translateX(-50%) translateY(-100%)';
+  charMenu.classList.add('visible');
+}
+
+function closeCharMenu(){
+  charMenu.classList.remove('visible');
+  cmenuColorSub.classList.remove('open');
+  neonEl.querySelectorAll('.nchar.selected').forEach(s => s.classList.remove('selected'));
+  activeCharIdx = null;
+}
+
+function updateFontCarousel(){
+  const f = FONTS_LIST[cmenuFontIdx];
+  cmenuFontName.textContent   = f.l;
+  cmenuFontName.style.fontFamily = `'${f.k}', cursive`;
+}
+
+function applyCarouselFont(){
+  if(activeCharIdx === null) return;
+  if(!S.charOverrides[activeCharIdx]) S.charOverrides[activeCharIdx] = {};
+  S.charOverrides[activeCharIdx].font = FONTS_LIST[cmenuFontIdx].k;
+  renderNeon();
+}
+
+// Flechas carrusel
+document.getElementById('cmenuPrev').addEventListener('click', e => {
+  e.stopPropagation();
+  cmenuFontIdx = (cmenuFontIdx - 1 + FONTS_LIST.length) % FONTS_LIST.length;
+  updateFontCarousel(); applyCarouselFont();
+});
+document.getElementById('cmenuNext').addEventListener('click', e => {
+  e.stopPropagation();
+  cmenuFontIdx = (cmenuFontIdx + 1) % FONTS_LIST.length;
+  updateFontCarousel(); applyCarouselFont();
+});
+
+// Abrir/cerrar submenu color
+cmenuColorBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  cmenuColorSub.classList.toggle('open');
+});
+
+// Seleccionar color
+cmenuColorSub.addEventListener('click', e => {
+  const sw = e.target.closest('.cmenu-csw'); if(!sw) return;
+  e.stopPropagation();
+  if(activeCharIdx === null) return;
+  if(!S.charOverrides[activeCharIdx]) S.charOverrides[activeCharIdx] = {};
+  S.charOverrides[activeCharIdx].color = sw.dataset.color;
+  cmenuColorBtn.style.background = sw.dataset.color;
+  cmenuColorSub.querySelectorAll('.cmenu-csw').forEach(s => s.classList.toggle('on', s === sw));
+  cmenuColorSub.classList.remove('open');
+  renderNeon();
+});
+
+// Reset
+document.getElementById('cmenuReset').addEventListener('click', e => {
+  e.stopPropagation();
+  if(activeCharIdx === null) return;
+  delete S.charOverrides[activeCharIdx];
+  closeCharMenu();
+  renderNeon();
+});
+
+document.addEventListener('pointerdown', e => {
+  if(!charMenu.classList.contains('visible')) return;
+  if(charMenu.contains(e.target)) return;
+  if(e.target.closest('.nchar')) return;
+  closeCharMenu();
+});
+
+// Cerrar al empezar a arrastrar el letrero
+signWrapper.addEventListener('pointermove', () => {
+  if(dragging) closeCharMenu();
+});
 
 // ════════════════════════════════════════
 // DRAG — letrero
 // ════════════════════════════════════════
 let dragging=false, dragStartX=0, dragStartY=0, posAtDragX=0, posAtDragY=0;
+let pointerDownTarget=null;  // guardamos target ANTES de setPointerCapture
 signWrapper.addEventListener('pointerdown',e=>{
   if(e.target.closest('#resizeHandle')) return;
+  pointerDownTarget=e.target;  // el target real (puede ser un .nchar)
+  charPointerMoved=false;
   dragging=true; dragStartX=e.clientX; dragStartY=e.clientY;
   posAtDragX=S.posX; posAtDragY=S.posY;
   signWrapper.setPointerCapture(e.pointerId); e.preventDefault(); e.stopPropagation();
 });
 signWrapper.addEventListener('pointermove',e=>{
   if(!dragging) return;
-  S.posX=posAtDragX+(e.clientX-dragStartX);
-  S.posY=posAtDragY+(e.clientY-dragStartY);
+  const dx=e.clientX-dragStartX, dy=e.clientY-dragStartY;
+  if(Math.abs(dx)>4||Math.abs(dy)>4) charPointerMoved=true;
+  S.posX=posAtDragX+dx;
+  S.posY=posAtDragY+dy;
   applyTransform();
 });
-signWrapper.addEventListener('pointerup',()=>{ dragging=false; });
+signWrapper.addEventListener('pointerup',e=>{
+  dragging=false;
+  // Usar el target guardado en pointerdown (setPointerCapture lo sobreescribe en e.target)
+  if(!charPointerMoved){
+    const sp=pointerDownTarget && pointerDownTarget.closest('.nchar');
+    if(sp) openCharMenu(sp);
+  }
+  pointerDownTarget=null;
+});
 
 // DRAG — fondo
 let bgDragging=false, bgStartX=0, bgStartY=0, bgAtX=50, bgAtY=50;
@@ -618,7 +985,7 @@ function getPinchDist(t){return Math.hypot(t[0].clientX-t[1].clientX,t[0].client
 document.getElementById('textInput').addEventListener('input',function(){
   const v=this.value.slice(0,60); this.value=v; S.text=v;
   document.getElementById('charCount').textContent=v.length+' caracteres';
-  recalcFontSize(); updateDimBadge(); dots();
+  S.charOverrides={}; closeCharMenu(); recalcFontSize(); updateDimBadge(); dots();
 });
 document.getElementById('fontGrid').addEventListener('click',e=>{
   const b=e.target.closest('.fbtn'); if(!b)return;
@@ -643,19 +1010,33 @@ document.getElementById('wallGrid').addEventListener('click',e=>{
 document.getElementById('mountGrid').addEventListener('click',e=>{
   const b=e.target.closest('.mbtn'); if(!b)return;
   document.querySelectorAll('.mbtn').forEach(x=>x.classList.remove('on'));
-  b.classList.add('on'); S.mount=b.dataset.m; applyMount(); dots();
+  b.classList.add('on'); S.mount=b.dataset.m;
+  // Si se vuelve a "libre", restaurar el backing si estaba activo
+  if(S.mount==='libre' && S.backing) drawAcrylic();
+  applyMount(); dots();
 });
 
 document.getElementById('tBacking').addEventListener('change',function(){
-  S.backing=this.checked; if(S.backing) drawAcrylic(); else { acrylicCvs.style.opacity='0'; } dots();
+  S.backing=this.checked;
+  if(S.backing){
+    // Quitar montaje para evitar sobreposición
+    if(S.mount!=='libre'){
+      S.mount='libre';
+      document.querySelectorAll('.mbtn').forEach(x=>x.classList.remove('on'));
+      document.querySelector('.mbtn[data-m="libre"]').classList.add('on');
+      mountPlate.style.cssText=''; mountHook.style.display='none';
+      mountBase.style.display='none'; mountScrews.style.display='none';
+    }
+    drawAcrylic();
+  } else {
+    acrylicCvs.style.opacity='0';
+  }
+  dots();
 });
 document.getElementById('tRgb').addEventListener('change',function(){ S.rgb=this.checked; this.checked?startRGB():stopRGB(); dots(); });
 document.getElementById('tFlicker').addEventListener('change',function(){ S.flicker=this.checked; neonEl.classList.toggle('flicker',this.checked); dots(); });
 document.getElementById('tDimmer').addEventListener('change',function(){ S.dimmer=this.checked; neonEl.classList.toggle('dimmed',this.checked); dots(); });
-document.getElementById('tOutdoor').addEventListener('change',function(){
-  S.outdoor=this.checked; rainCvs.style.display=this.checked?'block':'none';
-  this.checked?startRain():stopRain(); dots();
-});
+
 document.getElementById('tPower').addEventListener('change',function(){
   S.power=this.checked;
   if(this.checked){ renderNeon(); neonEl.classList.toggle('flicker',S.flicker); neonEl.classList.toggle('dimmed',S.dimmer); }
@@ -719,10 +1100,10 @@ function shareDesign(){
 // ════════════════════════════════════════
 function dots(){
   const checks=[
-    S.text.trim().length>0, S.font!=='Pacifico', S.color!=='#fff',
+    S.text.trim().length>0, S.font!=='Pacifico', S.color!=='#b3f0ff',
     !!document.querySelector('.wbtn.on:not(:first-child)'),
     S.mount!=='libre',
-    S.backing||S.rgb||S.flicker||S.dimmer||S.outdoor,
+    S.backing||S.rgb||S.flicker||S.dimmer,
   ];
   checks.forEach((ok,i)=>document.getElementById('d'+(i+1)).classList.toggle('on',ok));
   document.getElementById('d1').classList.add('on');
