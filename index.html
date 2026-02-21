@@ -128,8 +128,32 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
 #resizeHandle:hover{transform:scale(1.2);}
 #resizeHandle svg{width:10px;height:10px;}
 
-#sizeHint{position:absolute;top:-28px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);color:#fff;font-size:.6rem;font-weight:700;letter-spacing:.5px;padding:3px 8px;border-radius:5px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .2s;}
-#signWrapper:hover #sizeHint{opacity:1;}
+#sizeHint{
+  position:absolute;
+  bottom:-34px;
+  right:-8px;
+  background:rgba(0,0,0,.78);
+  color:#fff;
+  font-size:.55rem;
+  font-weight:700;
+  letter-spacing:.4px;
+  padding:3px 8px 3px 7px;
+  border-radius:5px;
+  white-space:nowrap;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity .35s;
+  transform-origin:top right;
+}
+/* Flecha apuntando arriba-derecha hacia el resizeHandle */
+#sizeHint::before{
+  content:'';
+  position:absolute;
+  bottom:100%;
+  right:10px;
+  border:5px solid transparent;
+  border-bottom-color:rgba(0,0,0,.78);
+}
 
 .dim-badge{position:absolute;bottom:12px;right:14px;z-index:3;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.14);border-radius:5px;padding:4px 10px;font-size:.63rem;font-weight:600;color:rgba(255,255,255,.65);backdrop-filter:blur(5px);letter-spacing:.3px;}
 .scroll-hint{position:absolute;bottom:12px;left:14px;z-index:3;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.1);border-radius:5px;padding:4px 9px;font-size:.58rem;color:rgba(255,255,255,.5);backdrop-filter:blur(4px);pointer-events:none;}
@@ -166,7 +190,7 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
   .wall-grid{grid-template-columns:repeat(4,1fr);}
   .color-grid{grid-template-columns:repeat(6,1fr);}
   #resizeHandle{width:28px;height:28px;bottom:-10px;right:-10px;}
-  #sizeHint{opacity:1;font-size:.52rem;}
+  #sizeHint{font-size:.52rem;}
 }
 @media (max-width:380px){
   .font-grid{grid-template-columns:1fr 1fr;}
@@ -310,6 +334,65 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
   flex-shrink:0;
 }
 .cmenu-reset:hover{ color:rgba(255,100,100,.8); }
+
+/* ═══ ROTATE HANDLE ═══ */
+#rotateHandle{
+  position:absolute;
+  top:-38px;
+  left:50%;
+  transform:translateX(-50%);
+  width:24px; height:24px;
+  background:rgba(20,20,30,.85);
+  border:2px solid rgba(255,255,255,.55);
+  border-radius:50%;
+  cursor:grab;
+  z-index:20;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.5);
+  transition:background .15s, transform .15s;
+  pointer-events:auto;
+}
+#rotateHandle:hover{
+  background:rgba(217,59,62,.9);
+  border-color:#fff;
+  transform:translateX(-50%) scale(1.15);
+}
+#rotateHandle.active{
+  cursor:grabbing;
+  background:rgba(217,59,62,.9);
+}
+/* Línea conectora del handle al wrapper */
+#rotateHandle::after{
+  content:'';
+  position:absolute;
+  top:100%; left:50%;
+  transform:translateX(-50%);
+  width:1px; height:10px;
+  background:rgba(255,255,255,.3);
+}
+#rotateHandle svg{ width:12px; height:12px; pointer-events:none; }
+
+/* Badge de ángulo */
+#angleBadge{
+  position:absolute;
+  top:-68px;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(0,0,0,.75);
+  color:#fff;
+  font-size:.55rem;
+  font-weight:700;
+  letter-spacing:.5px;
+  padding:3px 7px;
+  border-radius:4px;
+  white-space:nowrap;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity .15s;
+}
+#angleBadge.visible{ opacity:1; }
 </style>
 </head>
 <body>
@@ -439,7 +522,14 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
     <div class="canvas-overlay" id="canvasOverlay"></div>
     <canvas id="rainCanvas"></canvas>
     <div id="signWrapper">
-      <div id="sizeHint">← arrastra · esquina para redimensionar →</div>
+      <div id="angleBadge">0°</div>
+      <div id="rotateHandle">
+        <svg viewBox="0 0 14 14" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round">
+          <path d="M2.5 7 A4.5 4.5 0 1 1 7 11.5"/>
+          <polyline points="2.5,4.5 2.5,7 5,7"/>
+        </svg>
+      </div>
+      <div id="sizeHint">esquina para redimensionar ↗</div>
       <div id="mountPlate"></div>
       <div id="mountHook"></div>
       <div id="mountBase"></div>
@@ -479,7 +569,7 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
 // ════════════════════════════════════════
 const S = {
   text:'Hello World', font:'Pacifico', color:'#b3f0ff',
-  scale:1, posX:0, posY:0, bgX:50, bgY:50,
+  scale:1, posX:0, posY:0, rotation:0, bgX:50, bgY:50,
   mount:'libre',
   backing:false, rgb:false, flicker:false, dimmer:false, power:true,
   charOverrides:{},  // idx → {font, color}
@@ -710,7 +800,7 @@ function renderNeon(){
 
   signWrapper.style.left      = `calc(50% + ${S.posX}px)`;
   signWrapper.style.top       = `calc(50% + ${S.posY}px)`;
-  signWrapper.style.transform = `translate(-50%,-50%) scale(${S.scale})`;
+  signWrapper.style.transform = `translate(-50%,-50%) rotate(${S.rotation}deg) scale(${S.scale})`;
 
   if(!S.power){
     neonEl.style.color = '#5a5a5a';
@@ -745,9 +835,9 @@ function updateDimBadge(){
 function applyTransform(){
   signWrapper.style.left      = `calc(50% + ${S.posX}px)`;
   signWrapper.style.top       = `calc(50% + ${S.posY}px)`;
-  signWrapper.style.transform = `translate(-50%,-50%) scale(${S.scale})`;
+  signWrapper.style.transform = `translate(-50%,-50%) rotate(${S.rotation}deg) scale(${S.scale})`;
 }
-function resetPosition(){ S.posX=0; S.posY=0; S.scale=1; renderNeon(); updateDimBadge(); }
+function resetPosition(){ S.posX=0; S.posY=0; S.scale=1; S.rotation=0; renderNeon(); updateDimBadge(); }
 
 // ════════════════════════════════════════
 // MOUNT
@@ -922,6 +1012,87 @@ signWrapper.addEventListener('pointermove', () => {
   if(dragging) closeCharMenu();
 });
 
+
+// ════════════════════════════════════════
+// ROTATE HANDLE
+// ════════════════════════════════════════
+const rotHandle   = document.getElementById('rotateHandle');
+const angleBadge  = document.getElementById('angleBadge');
+let rotating      = false;
+let rotStartAngle = 0;   // ángulo del pointer al inicio del drag
+let rotAtStart    = 0;   // S.rotation al inicio del drag
+
+function getAngleFromCenter(clientX, clientY){
+  const rect = signWrapper.getBoundingClientRect();
+  const cx   = rect.left + rect.width  / 2;
+  const cy   = rect.top  + rect.height / 2;
+  return Math.atan2(clientY - cy, clientX - cx) * (180 / Math.PI);
+}
+
+rotHandle.addEventListener('pointerdown', e => {
+  e.stopPropagation();
+  e.preventDefault();
+  rotating      = true;
+  rotStartAngle = getAngleFromCenter(e.clientX, e.clientY);
+  rotAtStart    = S.rotation;
+  rotHandle.setPointerCapture(e.pointerId);
+  rotHandle.classList.add('active');
+  angleBadge.classList.add('visible');
+});
+
+rotHandle.addEventListener('pointermove', e => {
+  if(!rotating) return;
+  const current = getAngleFromCenter(e.clientX, e.clientY);
+  let delta = current - rotStartAngle;
+  S.rotation = rotAtStart + delta;
+  // Snap a 0/90/180/270 si está cerca (±4°)
+  const snaps = [0, 90, 180, 270, -90, -180, -270, 360, -360];
+  const nearest = snaps.find(s => Math.abs((S.rotation % 360) - s) < 4 || Math.abs(S.rotation - s) < 4);
+  if(nearest !== undefined){
+    const diff = S.rotation - Math.round(S.rotation / 90) * 90;
+    if(Math.abs(diff) < 4) S.rotation = Math.round(S.rotation / 90) * 90;
+  }
+  applyTransform();
+  // Mostrar ángulo normalizado 0-359
+  const display = ((Math.round(S.rotation) % 360) + 360) % 360;
+  angleBadge.textContent = display + '°';
+});
+
+rotHandle.addEventListener('pointerup', () => {
+  rotating = false;
+  rotHandle.classList.remove('active');
+  setTimeout(() => angleBadge.classList.remove('visible'), 800);
+  scheduleHint();
+});
+
+// ════════════════════════════════════════
+// SIZE HINT — aparece solo cuando el letrero está quieto
+// ════════════════════════════════════════
+const sizeHint   = document.getElementById('sizeHint');
+let hintTimer    = null;
+let hintShown    = false;
+
+function scheduleHint(){
+  clearTimeout(hintTimer);
+  hideHint();
+  // Mostrar después de 1.5s de inactividad
+  hintTimer = setTimeout(showHint, 1500);
+}
+
+function showHint(){
+  if(hintShown) return;
+  hintShown = true;
+  sizeHint.style.opacity = '1';
+  // Ocultar automáticamente después de 3s
+  hintTimer = setTimeout(hideHint, 3000);
+}
+
+function hideHint(){
+  hintShown = false;
+  sizeHint.style.opacity = '0';
+  clearTimeout(hintTimer);
+}
+
 // ════════════════════════════════════════
 // DRAG — letrero
 // ════════════════════════════════════════
@@ -930,6 +1101,7 @@ let pointerDownTarget=null;
 let charPointerMoved=false;  // guardamos target ANTES de setPointerCapture
 signWrapper.addEventListener('pointerdown',e=>{
   if(e.target.closest('#resizeHandle')) return;
+  hideHint();
   pointerDownTarget=e.target;  // el target real (puede ser un .nchar)
   charPointerMoved=false;
   dragging=true; dragStartX=e.clientX; dragStartY=e.clientY;
@@ -952,6 +1124,7 @@ signWrapper.addEventListener('pointerup',e=>{
     if(sp) openCharMenu(sp);
   }
   pointerDownTarget=null;
+  scheduleHint();
 });
 
 // DRAG — fondo
@@ -974,9 +1147,9 @@ previewCanvas.addEventListener('pointerup',()=>{ bgDragging=false; previewCanvas
 // ════════════════════════════════════════
 const rHandle=document.getElementById('resizeHandle');
 let resizing=false, resizeStartX=0, scaleAtResize=1;
-rHandle.addEventListener('pointerdown',e=>{ resizing=true; resizeStartX=e.clientX; scaleAtResize=S.scale; rHandle.setPointerCapture(e.pointerId); e.stopPropagation(); e.preventDefault(); });
+rHandle.addEventListener('pointerdown',e=>{ hideHint(); resizing=true; resizeStartX=e.clientX; scaleAtResize=S.scale; rHandle.setPointerCapture(e.pointerId); e.stopPropagation(); e.preventDefault(); });
 rHandle.addEventListener('pointermove',e=>{ if(!resizing)return; S.scale=Math.max(.15,Math.min(3,scaleAtResize+(e.clientX-resizeStartX)*.006)); renderNeon(); updateDimBadge(); });
-rHandle.addEventListener('pointerup',()=>{ resizing=false; });
+rHandle.addEventListener('pointerup',()=>{ resizing=false; scheduleHint(); });
 
 previewCanvas.addEventListener('wheel',e=>{ e.preventDefault(); S.scale=Math.max(.15,Math.min(3,S.scale-e.deltaY*.001)); renderNeon(); updateDimBadge(); },{passive:false});
 
@@ -1203,6 +1376,7 @@ window.addEventListener('resize',()=>{
 // INIT
 // ════════════════════════════════════════
 recalcFontSize();  // calcula currentFS según el canvas inicial, luego renderiza
+scheduleHint();
 applyMount();
 dots();
 initMobileSheet();
