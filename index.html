@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Diseñador de Neón</title>
-<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Dancing+Script:wght@700&family=Satisfy&family=Permanent+Marker&family=Sacramento&family=Great+Vibes&family=Lobster&family=Abril+Fatface&family=Righteous&family=Orbitron:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300&family=Nunito:wght@300&family=Pacifico&family=Courgette&family=Yellowtail&family=Cookie&family=Kaushan+Script&family=Righteous&family=Orbitron:wght@400&family=Raleway:wght@300&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg:#f2f0ec; --panel:#fff; --panel2:#f7f5f2;
@@ -82,15 +82,26 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
 .preview-canvas{flex:1;min-height:0;position:relative;overflow:hidden;background-size:cover;background-position:center;cursor:default;}
 .canvas-overlay{position:absolute;inset:0;background:rgba(0,0,0,.38);pointer-events:none;z-index:1;transition:background .3s;}
 
+/* Perspective container — wraps signWrapper for 3D transforms */
+#perspectiveWrap{
+  position:absolute;
+  inset:0;
+  perspective:900px;
+  perspective-origin:50% 50%;
+  pointer-events:none;
+  z-index:10;
+}
 #signWrapper{
   position:absolute;
   z-index:10;
   top:50%;left:50%;
   transform:translate(-50%,-50%);
   transform-origin:center center;
+  transform-style:preserve-3d;
   cursor:grab;user-select:none;touch-action:none;
   overflow:visible;
-  width:max-content;   /* ancho dictado por el contenido, nunca por el padre */
+  width:max-content;
+  pointer-events:auto;
 }
 #signWrapper:active{cursor:grabbing;}
 
@@ -118,7 +129,7 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
   line-height:1.2;
   white-space:pre;
   padding:16px 28px;
-  pointer-events:none;
+  pointer-events:auto;
   position:relative;
   z-index:2;
   transition:color .2s,text-shadow .2s;
@@ -128,8 +139,32 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
 #resizeHandle:hover{transform:scale(1.2);}
 #resizeHandle svg{width:10px;height:10px;}
 
-#sizeHint{position:absolute;top:-28px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);color:#fff;font-size:.6rem;font-weight:700;letter-spacing:.5px;padding:3px 8px;border-radius:5px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .2s;}
-#signWrapper:hover #sizeHint{opacity:1;}
+#sizeHint{
+  position:absolute;
+  bottom:-34px;
+  right:-8px;
+  background:rgba(0,0,0,.78);
+  color:#fff;
+  font-size:.55rem;
+  font-weight:700;
+  letter-spacing:.4px;
+  padding:3px 8px 3px 7px;
+  border-radius:5px;
+  white-space:nowrap;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity .35s;
+  transform-origin:top right;
+}
+/* Flecha apuntando arriba-derecha hacia el resizeHandle */
+#sizeHint::before{
+  content:'';
+  position:absolute;
+  bottom:100%;
+  right:10px;
+  border:5px solid transparent;
+  border-bottom-color:rgba(0,0,0,.78);
+}
 
 .dim-badge{position:absolute;bottom:12px;right:14px;z-index:3;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.14);border-radius:5px;padding:4px 10px;font-size:.63rem;font-weight:600;color:rgba(255,255,255,.65);backdrop-filter:blur(5px);letter-spacing:.3px;}
 .scroll-hint{position:absolute;bottom:12px;left:14px;z-index:3;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.1);border-radius:5px;padding:4px 9px;font-size:.58rem;color:rgba(255,255,255,.5);backdrop-filter:blur(4px);pointer-events:none;}
@@ -166,12 +201,252 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
   .wall-grid{grid-template-columns:repeat(4,1fr);}
   .color-grid{grid-template-columns:repeat(6,1fr);}
   #resizeHandle{width:28px;height:28px;bottom:-10px;right:-10px;}
-  #sizeHint{opacity:1;font-size:.52rem;}
+  #sizeHint{font-size:.52rem;}
 }
 @media (max-width:380px){
   .font-grid{grid-template-columns:1fr 1fr;}
   .wall-grid{grid-template-columns:repeat(3,1fr);}
 }
+
+/* ═══ CHAR EDIT ═══ */
+.nchar{
+  display:inline;
+  cursor:pointer;
+  position:relative;
+  transition:text-shadow .15s;
+}
+.nchar.selected{
+  outline:2px solid rgba(255,255,255,.5);
+  outline-offset:3px;
+  border-radius:3px;
+}
+.nchar-nl{ display:block; height:0; }
+
+#charMenu{
+  position:absolute;
+  z-index:100;
+  background:rgba(12,13,18,.95);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:10px;
+  padding:8px 10px;
+  box-shadow:0 8px 28px rgba(0,0,0,.75);
+  backdrop-filter:blur(14px);
+  pointer-events:auto;
+  display:none;
+  white-space:nowrap;
+}
+#charMenu.visible{ display:flex; align-items:center; gap:8px; }
+#charMenu::after{
+  content:'';
+  position:absolute;
+  top:100%; left:50%;
+  transform:translateX(-50%);
+  border:6px solid transparent;
+  border-top-color:rgba(12,13,18,.95);
+}
+
+/* Carrusel de fuentes */
+.cmenu-carousel{
+  display:flex;
+  align-items:center;
+  gap:4px;
+}
+.cmenu-arr{
+  background:none;
+  border:none;
+  color:rgba(255,255,255,.5);
+  font-size:1rem;
+  cursor:pointer;
+  padding:0 2px;
+  line-height:1;
+  transition:color .12s;
+  flex-shrink:0;
+}
+.cmenu-arr:hover{ color:#fff; }
+.cmenu-font-name{
+  font-size:.82rem;
+  color:#fff;
+  min-width:80px;
+  text-align:center;
+  padding:4px 8px;
+  background:rgba(255,255,255,.08);
+  border-radius:6px;
+  border:1px solid rgba(255,255,255,.12);
+  cursor:default;
+}
+
+/* Separador */
+.cmenu-sep{
+  width:1px;
+  height:24px;
+  background:rgba(255,255,255,.12);
+  flex-shrink:0;
+}
+
+/* Swatch de color activo + submenu */
+.cmenu-color-wrap{
+  position:relative;
+}
+.cmenu-color-btn{
+  width:22px; height:22px;
+  border-radius:50%;
+  border:2px solid rgba(255,255,255,.5);
+  cursor:pointer;
+  transition:transform .12s;
+  flex-shrink:0;
+  display:block;
+}
+.cmenu-color-btn:hover{ transform:scale(1.15); }
+.cmenu-color-sub{
+  position:absolute;
+  bottom:calc(100% + 10px);
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(12,13,18,.97);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:10px;
+  padding:8px;
+  display:none;
+  flex-wrap:wrap;
+  gap:6px;
+  width:154px;
+  box-shadow:0 6px 24px rgba(0,0,0,.8);
+}
+.cmenu-color-sub.open{ display:flex; }
+.cmenu-color-sub::after{
+  content:'';
+  position:absolute;
+  top:100%; left:50%;
+  transform:translateX(-50%);
+  border:6px solid transparent;
+  border-top-color:rgba(12,13,18,.97);
+}
+.cmenu-csw{
+  width:20px; height:20px;
+  border-radius:50%;
+  cursor:pointer;
+  border:2px solid transparent;
+  transition:all .12s;
+  flex-shrink:0;
+}
+.cmenu-csw:hover{ transform:scale(1.18); }
+.cmenu-csw.on{ border-color:#fff; transform:scale(1.1); }
+
+/* Reset */
+.cmenu-reset{
+  background:none;
+  border:none;
+  color:rgba(255,255,255,.35);
+  font-size:.85rem;
+  cursor:pointer;
+  padding:0 2px;
+  transition:color .12s;
+  line-height:1;
+  flex-shrink:0;
+}
+.cmenu-reset:hover{ color:rgba(255,100,100,.8); }
+
+/* ═══ ROTATE HANDLE ═══ */
+#rotateHandle{
+  position:absolute;
+  top:-38px;
+  left:50%;
+  transform:translateX(-50%);
+  width:24px; height:24px;
+  background:rgba(20,20,30,.85);
+  border:2px solid rgba(255,255,255,.55);
+  border-radius:50%;
+  cursor:grab;
+  z-index:20;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.5);
+  transition:background .15s, transform .15s;
+  pointer-events:auto;
+}
+#rotateHandle:hover{
+  background:rgba(217,59,62,.9);
+  border-color:#fff;
+  transform:translateX(-50%) scale(1.15);
+}
+#rotateHandle.active{
+  cursor:grabbing;
+  background:rgba(217,59,62,.9);
+}
+/* Línea conectora del handle al wrapper */
+#rotateHandle::after{
+  content:'';
+  position:absolute;
+  top:100%; left:50%;
+  transform:translateX(-50%);
+  width:1px; height:10px;
+  background:rgba(255,255,255,.3);
+}
+#rotateHandle svg{ width:12px; height:12px; pointer-events:none; }
+
+/* Badge de ángulo */
+#angleBadge{
+  position:absolute;
+  top:-68px;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(0,0,0,.75);
+  color:#fff;
+  font-size:.55rem;
+  font-weight:700;
+  letter-spacing:.5px;
+  padding:3px 7px;
+  border-radius:4px;
+  white-space:nowrap;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity .15s;
+}
+#angleBadge.visible{ opacity:1; }
+
+/* ═══ TILT HANDLES (3D) ═══ */
+.tiltHandle{
+  position:absolute;
+  top:50%;
+  width:20px; height:20px;
+  transform:translateY(-50%);
+  background:rgba(20,20,30,.85);
+  border:2px solid rgba(255,255,255,.45);
+  border-radius:50%;
+  cursor:ns-resize;
+  z-index:20;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.5);
+  transition:background .15s;
+  pointer-events:auto;
+}
+.tiltHandle:hover{ background:rgba(217,59,62,.9); border-color:#fff; }
+.tiltHandle.active{ background:rgba(217,59,62,.9); cursor:grabbing; }
+.tiltHandle svg{ width:10px; height:10px; pointer-events:none; }
+#tiltHandleY{ right:-30px; cursor:ew-resize; }  /* eje Y — lado derecho, drag horizontal */
+
+/* Badge compartido para tilt */
+#tiltBadge{
+  position:absolute;
+  top:-68px;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(0,0,0,.75);
+  color:#fff;
+  font-size:.55rem;
+  font-weight:700;
+  letter-spacing:.4px;
+  padding:3px 7px;
+  border-radius:4px;
+  white-space:nowrap;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity .15s;
+}
+#tiltBadge.visible{ opacity:1; }
 </style>
 </head>
 <body>
@@ -201,36 +476,36 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
   <div class="block" data-tab="Fuente" data-idx="1">
     <div class="bhead"><span class="num">2</span><span class="blabel">Tipografía</span></div>
     <div class="font-grid" id="fontGrid">
-      <div class="fbtn on"  data-font="Pacifico"         style="font-family:'Pacifico'">Pacifico</div>
-      <div class="fbtn"     data-font="Dancing Script"   style="font-family:'Dancing Script'">Dancing</div>
-      <div class="fbtn"     data-font="Satisfy"          style="font-family:'Satisfy'">Satisfy</div>
-      <div class="fbtn"     data-font="Permanent Marker" style="font-family:'Permanent Marker'">Marker</div>
-      <div class="fbtn"     data-font="Sacramento"       style="font-family:'Sacramento';font-size:1.1rem">Sacramento</div>
-      <div class="fbtn"     data-font="Great Vibes"      style="font-family:'Great Vibes';font-size:1.1rem">Great Vibes</div>
-      <div class="fbtn"     data-font="Lobster"          style="font-family:'Lobster'">Lobster</div>
-      <div class="fbtn"     data-font="Abril Fatface"    style="font-family:'Abril Fatface'">Abril</div>
-      <div class="fbtn"     data-font="Righteous"        style="font-family:'Righteous'">Righteous</div>
-      <div class="fbtn"     data-font="Orbitron"         style="font-family:'Orbitron';font-size:.68rem">ORBITRON</div>
+      <div class="fbtn on"  data-font="Pacifico"       style="font-family:'Pacifico'">Pacifico</div>
+      <div class="fbtn"     data-font="Courgette"      style="font-family:'Courgette'">Courgette</div>
+      <div class="fbtn"     data-font="Yellowtail"     style="font-family:'Yellowtail'">Yellowtail</div>
+      <div class="fbtn"     data-font="Cookie"         style="font-family:'Cookie';font-size:1.1rem">Cookie</div>
+      <div class="fbtn"     data-font="Kaushan Script" style="font-family:'Kaushan Script'">Kaushan</div>
+      <div class="fbtn"     data-font="Comfortaa"      style="font-family:'Comfortaa';font-weight:300">Comfortaa</div>
+      <div class="fbtn"     data-font="Nunito"         style="font-family:'Nunito';font-weight:300">Nunito</div>
+      <div class="fbtn"     data-font="Raleway"        style="font-family:'Raleway';font-weight:300;letter-spacing:2px;font-size:.8rem">Raleway</div>
+      <div class="fbtn"     data-font="Righteous"      style="font-family:'Righteous'">Righteous</div>
+      <div class="fbtn"     data-font="Orbitron"       style="font-family:'Orbitron';font-size:.68rem">Orbitron</div>
     </div>
   </div>
 
   <div class="block" data-tab="Color" data-idx="2">
     <div class="bhead"><span class="num">3</span><span class="blabel">Color del Neón</span></div>
     <div class="color-grid" id="colorGrid">
-      <div class="cswatch on" style="background:#fff"    data-c="#fff"    data-n="Blanco"></div>
-      <div class="cswatch"    style="background:#ffe8b0" data-c="#ffe8b0" data-n="Cálido"></div>
-      <div class="cswatch"    style="background:#ff3cac" data-c="#ff3cac" data-n="Rosa"></div>
-      <div class="cswatch"    style="background:#ffb3d9" data-c="#ffb3d9" data-n="Rosa Claro"></div>
-      <div class="cswatch"    style="background:#3b82f6" data-c="#3b82f6" data-n="Azul"></div>
-      <div class="cswatch"    style="background:#b3f0ff" data-c="#b3f0ff" data-n="Azul Hielo"></div>
-      <div class="cswatch"    style="background:#00f5ff" data-c="#00f5ff" data-n="Turquesa"></div>
+      <div class="cswatch on" style="background:#b3f0ff" data-c="#b3f0ff" data-n="Azul Hielo"></div>
+      <div class="cswatch"    style="background:#ff2222" data-c="#ff2222" data-n="Roja"></div>
+      <div class="cswatch"    style="background:#ffb300" data-c="#ffb300" data-n="Amber"></div>
+      <div class="cswatch"    style="background:#e8ff00" data-c="#e8ff00" data-n="Amarillo Limón"></div>
+      <div class="cswatch"    style="background:#bf00ff" data-c="#bf00ff" data-n="Morado"></div>
       <div class="cswatch"    style="background:#00ff88" data-c="#00ff88" data-n="Verde"></div>
-      <div class="cswatch"    style="background:#ff2222" data-c="#ff2222" data-n="Rojo"></div>
+      <div class="cswatch"    style="background:#39ff14" data-c="#39ff14" data-n="Verde Mars"></div>
+      <div class="cswatch"    style="background:#3b82f6" data-c="#3b82f6" data-n="Azul"></div>
+      <div class="cswatch"    style="background:#ff3cac" data-c="#ff3cac" data-n="Rosa"></div>
+      <div class="cswatch"    style="background:#ffd700" data-c="#ffd700" data-n="Amarillo Dorado"></div>
       <div class="cswatch"    style="background:#ff8800" data-c="#ff8800" data-n="Naranja"></div>
-      <div class="cswatch"    style="background:#ffee00" data-c="#ffee00" data-n="Amarillo"></div>
-      <div class="cswatch"    style="background:#bf00ff" data-c="#bf00ff" data-n="Púrpura"></div>
+      <div class="cswatch"    style="background:#e8f4ff" data-c="#e8f4ff" data-n="Blanca Fría"></div>
     </div>
-    <div class="clabel" id="colorLabel">Blanco</div>
+    <div class="clabel" id="colorLabel">Azul Hielo</div>
   </div>
 
   <div class="block" data-tab="Pared" data-idx="3">
@@ -251,9 +526,9 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
     <div class="bhead"><span class="num">5</span><span class="blabel">Tipo de Montaje</span></div>
     <div class="mount-grid" id="mountGrid">
       <button class="mbtn on" data-m="libre"><span class="mico">✨</span>Sin sujeción<br><small style="font-size:.55rem;opacity:.7">Sólo el letrero</small></button>
-      <button class="mbtn" data-m="tornillos"><span class="mico">🔧</span>Tornillos<br><small style="font-size:.55rem;opacity:.7">Fijado a la pared</small></button>
       <button class="mbtn" data-m="colgar"><span class="mico">🪝</span>Para colgar<br><small style="font-size:.55rem;opacity:.7">Cable colgante</small></button>
-      <button class="mbtn" data-m="base"><span class="mico">🏠</span>Base de mesa<br><small style="font-size:.55rem;opacity:.7">Con soporte</small></button>
+      <button class="mbtn" data-m="acrilico-cuadrado"><span class="mico">⬜</span>Acrílico Cuadrado<br><small style="font-size:.55rem;opacity:.7">Placa rectangular</small></button>
+      <button class="mbtn" data-m="acrilico-redondo"><span class="mico">⭕</span>Acrílico Redondo<br><small style="font-size:.55rem;opacity:.7">Placa circular</small></button>
     </div>
   </div>
 
@@ -276,13 +551,10 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
         <div><div class="tname">Control de Brillo</div><div class="tdesc">Simula intensidad baja — dimmer físico incluido</div></div>
         <label class="toggle"><input type="checkbox" id="tDimmer"><span class="tslider"></span></label>
       </div>
-      <div class="trow">
-        <div><div class="tname">Uso Exterior (IP65)</div><div class="tdesc">Simulación de lluvia en vista previa</div></div>
-        <label class="toggle"><input type="checkbox" id="tOutdoor"><span class="tslider"></span></label>
-      </div>
+
       <div class="trow" style="padding-top:10px;border-top:1px solid var(--border);margin-top:2px;">
         <div><div class="tname" style="font-size:.85rem;">💡 Neón Encendido</div><div class="tdesc">Apaga para ver el letrero sin luz</div></div>
-        <label class="toggle"><input type="checkbox" id="tPower" checked><span class="tslider" style="background:var(--accent);"></span></label>
+        <label class="toggle"><input type="checkbox" id="tPower" checked><span class="tslider"></span></label>
       </div>
     </div>
   </div>
@@ -303,18 +575,52 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
     style="background-image:url('https://images.unsplash.com/photo-1770816306935-d0a08e93d823?w=1400&q=85')">
     <div class="canvas-overlay" id="canvasOverlay"></div>
     <canvas id="rainCanvas"></canvas>
+    <div id="perspectiveWrap">
     <div id="signWrapper">
-      <div id="sizeHint">← arrastra · esquina para redimensionar →</div>
+      <div id="angleBadge">0°</div>
+      <div id="rotateHandle">
+        <svg viewBox="0 0 14 14" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round">
+          <path d="M2.5 7 A4.5 4.5 0 1 1 7 11.5"/>
+          <polyline points="2.5,4.5 2.5,7 5,7"/>
+        </svg>
+      </div>
+      <div id="sizeHint">esquina para redimensionar ↗</div>
+      <div id="tiltBadge">0°</div>
+      <div class="tiltHandle" id="tiltHandleY" title="Inclinar — arrastra ↔">
+        <svg viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round">
+          <line x1="1" y1="5" x2="9" y2="5"/>
+          <polyline points="3,2 1,5 3,8"/>
+          <polyline points="7,2 9,5 7,8"/>
+        </svg>
+      </div>
       <div id="mountPlate"></div>
       <div id="mountHook"></div>
       <div id="mountBase"></div>
       <div id="mountScrews"></div>
       <canvas id="acrylicCanvas"></canvas>
       <div id="neonText" style="font-family:'Pacifico'">Hello World</div>
-      <div id="resizeHandle">
+      <div id="charMenu">
+  <!-- Carrusel fuente -->
+  <div class="cmenu-carousel">
+    <button class="cmenu-arr" id="cmenuPrev">‹</button>
+    <div class="cmenu-font-name" id="cmenuFontName">Pacifico</div>
+    <button class="cmenu-arr" id="cmenuNext">›</button>
+  </div>
+  <div class="cmenu-sep"></div>
+  <!-- Color -->
+  <div class="cmenu-color-wrap">
+    <div class="cmenu-color-btn" id="cmenuColorBtn"></div>
+    <div class="cmenu-color-sub" id="cmenuColorSub"></div>
+  </div>
+  <div class="cmenu-sep"></div>
+  <!-- Reset -->
+  <button class="cmenu-reset" id="cmenuReset" title="Restablecer">↺</button>
+</div>
+<div id="resizeHandle">
         <svg viewBox="0 0 10 10"><line x1="2" y1="8" x2="8" y2="2" stroke="white" stroke-width="1.5" stroke-linecap="round"/><line x1="5" y1="8" x2="8" y2="5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
       </div>
     </div>
+    </div><!-- /perspectiveWrap -->
     <div class="dim-badge" id="dimBadge">~ 60 × 20 cm</div>
     <div class="scroll-hint" id="scrollHint">🖱 Rueda del ratón = redimensionar</div>
   </div>
@@ -326,10 +632,11 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
 // STATE
 // ════════════════════════════════════════
 const S = {
-  text:'Hello World', font:'Pacifico', color:'#fff',
-  scale:1, posX:0, posY:0, bgX:50, bgY:50,
+  text:'Hello World', font:'Pacifico', color:'#b3f0ff',
+  scale:1, posX:0, posY:0, rotation:0, tiltY:0, bgX:50, bgY:50,
   mount:'libre',
-  backing:false, rgb:false, flicker:false, dimmer:false, outdoor:false, power:true,
+  backing:false, rgb:false, flicker:false, dimmer:false, power:true,
+  charOverrides:{},  // idx → {font, color}
 };
 
 // ════════════════════════════════════════
@@ -393,7 +700,7 @@ function startRGB(){
   rgbInt = setInterval(()=>{
     currentRGBColor = RGB_COLORS[ri++ % RGB_COLORS.length];
     neonEl.style.color = currentRGBColor;
-    neonEl.style.textShadow = `0 0 4px ${currentRGBColor},0 0 10px ${currentRGBColor},0 0 24px ${currentRGBColor},0 0 50px ${currentRGBColor}`;
+    neonEl.style.textShadow = `0 0 3px ${currentRGBColor},0 0 8px ${currentRGBColor},0 0 18px ${currentRGBColor}`;
     if(S.backing) drawAcrylic();
   }, 700);
 }
@@ -467,53 +774,116 @@ function _renderAcrylic(){
   const silOuter = threshold(off,      16,  15);  // dilatado → contorno exterior
   const silInner = threshold(silOuter,  3, 180);  // erosionado → interior
 
-  // — Anillo: silOuter MINUS silInner —
+  // — Silueta completa (silOuter) con estilo acrílico translúcido —
   const ring = new OffscreenCanvas(cvW, cvH);
   const rc   = ring.getContext('2d');
-  const grad = rc.createLinearGradient(0, 0, 0, cvH);
-  grad.addColorStop(0,   'rgba(205,207,213,0.95)');
-  grad.addColorStop(0.5, 'rgba(175,177,183,0.95)');
-  grad.addColorStop(1,   'rgba(145,147,153,0.95)');
+  // Gradiente acrílico igual que los montajes de placa
+  const grad = rc.createLinearGradient(0, 0, cvW * 0.7, cvH);
+  grad.addColorStop(0,   'rgba(220,230,245,0.22)');
+  grad.addColorStop(0.5, 'rgba(180,195,220,0.15)');
+  grad.addColorStop(1,   'rgba(200,215,235,0.20)');
   rc.fillStyle = grad;
   rc.fillRect(0, 0, cvW, cvH);
+  // Recortar a la silueta exterior del texto
   rc.globalCompositeOperation = 'destination-in';
   rc.drawImage(silOuter, 0, 0);
-  rc.globalCompositeOperation = 'destination-out';
-  rc.drawImage(silInner, 0, 0);
+
+  // Borde brillante interior: línea blanca translúcida en el borde de la silueta
+  const rim = new OffscreenCanvas(cvW, cvH);
+  const rm  = rim.getContext('2d');
+  rm.fillStyle = 'rgba(255,255,255,0.28)';
+  rm.fillRect(0, 0, cvW, cvH);
+  rm.globalCompositeOperation = 'destination-in';
+  rm.drawImage(silOuter, 0, 0);
+  rm.globalCompositeOperation = 'destination-out';
+  rm.drawImage(silInner, 0, 0);
 
   acrylicCtx.clearRect(0, 0, cvW, cvH);
   acrylicCtx.drawImage(ring, 0, 0);
-  acrylicCvs.style.filter  = 'drop-shadow(0 4px 14px rgba(0,0,0,0.48))';
+  acrylicCtx.drawImage(rim,  0, 0);
+  acrylicCvs.style.filter  = 'drop-shadow(0 4px 20px rgba(0,0,0,0.5))';
   acrylicCvs.style.opacity = '1';
 }
 
 // ════════════════════════════════════════
 // RENDER NEON TEXT
 // ════════════════════════════════════════
+function buildNeonSpans(){
+  neonEl.innerHTML = '';
+  const chars = S.text || ' ';
+  for(let i = 0; i < chars.length; i++){
+    const ch = chars[i];
+    if(ch === '\n'){
+      const br = document.createElement('span');
+      br.className = 'nchar-nl';
+      neonEl.appendChild(br);
+      continue;
+    }
+    const sp = document.createElement('span');
+    sp.className = 'nchar';
+    sp.dataset.idx = i;
+    sp.textContent = ch === ' ' ? '\u00A0' : ch;
+    const ov = S.charOverrides[i];
+    if(ov){
+      if(ov.font) sp.style.fontFamily = `'${ov.font}', cursive`;
+      if(ov.color){
+        sp.style.color = ov.color;
+        if(S.power){
+          const c = ov.color;
+          sp.style.textShadow = `0 0 3px ${c},0 0 8px ${c},0 0 18px ${c}`;
+        }
+      }
+    }
+    // Re-marcar el span activo si el menú está abierto
+    if(i === activeCharIdx) sp.classList.add('selected');
+    neonEl.appendChild(sp);
+  }
+  // Reposicionar el menú sobre el span recién creado
+  if(activeCharIdx !== null && charMenu.classList.contains('visible')){
+    const freshSpan = neonEl.querySelector(`.nchar[data-idx="${activeCharIdx}"]`);
+    if(freshSpan) _repositionMenu(freshSpan);
+  }
+}
+
+function _repositionMenu(spanEl){
+  const wRect = signWrapper.getBoundingClientRect();
+  const sRect = spanEl.getBoundingClientRect();
+  const sc    = S.scale;
+  const cx    = (sRect.left + sRect.width / 2 - wRect.left) / sc;
+  const ty    = (sRect.top - wRect.top) / sc - 14;
+  charMenu.style.left      = cx + 'px';
+  charMenu.style.top       = ty + 'px';
+  charMenu.style.transform = 'translateX(-50%) translateY(-100%)';
+}
+
 function renderNeon(){
   // Aplica currentFS tal como está — solo se recalcula cuando
   // el usuario cambia el texto o la fuente (no en resize)
-  neonEl.textContent      = S.text || ' ';
   neonEl.style.fontFamily = `'${S.font}', cursive`;
   neonEl.style.fontSize   = currentFS + 'px';
 
-  // 2. Posición: left/top marcan el centro, transform solo aplica scale
-  //    NO incluimos translate del posX/posY en transform para evitar
-  //    conflictos con applyTransform()
   signWrapper.style.left      = `calc(50% + ${S.posX}px)`;
   signWrapper.style.top       = `calc(50% + ${S.posY}px)`;
-  signWrapper.style.transform = `translate(-50%,-50%) scale(${S.scale})`;
+  signWrapper.style.transform = `translate(-50%,-50%) rotateY(${S.tiltY}deg) rotate(${S.rotation}deg) scale(${S.scale})`;
 
   if(!S.power){
     neonEl.style.color = '#5a5a5a';
     neonEl.style.textShadow = 'none';
+    buildNeonSpans();
+    // overrides: sin glow cuando apagado
+    neonEl.querySelectorAll('.nchar').forEach(sp => {
+      sp.style.textShadow = 'none';
+      sp.style.color = '';
+    });
     if(S.backing) drawAcrylic();
     return;
   }
 
   const c = (S.rgb && rgbInt) ? currentRGBColor : S.color;
   neonEl.style.color = c;
-  neonEl.style.textShadow = `0 0 5px ${c},0 0 10px ${c},0 0 20px ${c},0 0 40px ${c},0 0 80px ${c}`;
+  neonEl.style.textShadow = `0 0 3px ${c},0 0 8px ${c},0 0 18px ${c}`;
+
+  buildNeonSpans();
 
   if(S.backing) drawAcrylic();
 }
@@ -529,9 +899,9 @@ function updateDimBadge(){
 function applyTransform(){
   signWrapper.style.left      = `calc(50% + ${S.posX}px)`;
   signWrapper.style.top       = `calc(50% + ${S.posY}px)`;
-  signWrapper.style.transform = `translate(-50%,-50%) scale(${S.scale})`;
+  signWrapper.style.transform = `translate(-50%,-50%) rotateY(${S.tiltY}deg) rotate(${S.rotation}deg) scale(${S.scale})`;
 }
-function resetPosition(){ S.posX=0; S.posY=0; S.scale=1; renderNeon(); updateDimBadge(); }
+function resetPosition(){ S.posX=0; S.posY=0; S.scale=1; S.rotation=0; S.tiltY=0; renderNeon(); updateDimBadge(); }
 
 // ════════════════════════════════════════
 // MOUNT
@@ -539,43 +909,332 @@ function resetPosition(){ S.posX=0; S.posY=0; S.scale=1; renderNeon(); updateDim
 function applyMount(){
   mountPlate.style.cssText=''; mountHook.style.display='none';
   mountBase.style.display='none'; mountScrews.style.display='none';
-  if(S.mount==='tornillos'){
-    mountScrews.style.display='block'; mountScrews.innerHTML='';
-    [{top:'-4px',left:'-4px'},{top:'-4px',right:'-4px'},
-     {bottom:'-4px',left:'-4px'},{bottom:'-4px',right:'-4px'}].forEach(p=>{
-      const sc=document.createElement('div'); sc.className='screw';
-      Object.assign(sc.style,p,{position:'absolute'}); mountScrews.appendChild(sc);
-    });
-    mountPlate.style.cssText='position:absolute;inset:-14px -18px;border-radius:10px;background:rgba(0,0,0,.5);opacity:1;box-shadow:0 0 0 2px rgba(120,120,120,.4);';
+
+  // Montajes con placa propia ocultan el backing acrílico para evitar sobreposición
+  const hasPlate = ['acrilico-cuadrado','acrilico-redondo','colgar'].includes(S.mount);
+  if(hasPlate && S.backing){
+    acrylicCvs.style.opacity='0';
+  } else if(S.backing){
+    drawAcrylic();
   }
+
   if(S.mount==='colgar'){
     mountHook.style.cssText='display:block;position:absolute;left:50%;top:-70px;transform:translateX(-50%);width:2px;height:70px;background:repeating-linear-gradient(to bottom,#aaa 0,#aaa 4px,#888 4px,#888 8px);box-shadow:0 0 4px rgba(0,0,0,.5);';
-    mountPlate.style.cssText='position:absolute;inset:-14px -18px;border-radius:10px;background:rgba(10,10,10,.55);opacity:1;box-shadow:0 4px 24px rgba(0,0,0,.6);';
+    mountPlate.style.cssText='position:absolute;inset:-18px -22px;border-radius:10px;background:linear-gradient(160deg,rgba(220,230,245,.18) 0%,rgba(180,195,220,.12) 50%,rgba(200,215,235,.16) 100%);opacity:1;backdrop-filter:blur(1px);box-shadow:0 4px 28px rgba(0,0,0,.55),inset 0 0 0 1.5px rgba(255,255,255,.22),inset 0 1px 0 rgba(255,255,255,.35);';
   }
-  if(S.mount==='base'){
-    mountBase.style.cssText='display:block;position:absolute;left:50%;bottom:-50px;transform:translateX(-50%);width:60%;text-align:center;pointer-events:none;';
-    mountBase.innerHTML='<div style="width:4px;height:36px;background:#888;margin:0 auto;border-radius:2px;box-shadow:0 0 6px rgba(0,0,0,.5);"></div><div style="width:70%;height:8px;background:#777;margin:0 auto;border-radius:4px;"></div><div style="width:90%;height:5px;background:#666;margin:0 auto;border-radius:3px;margin-top:2px;"></div>';
-    mountPlate.style.cssText='position:absolute;inset:-14px -18px;border-radius:12px;background:rgba(10,10,10,.5);opacity:1;box-shadow:0 6px 30px rgba(0,0,0,.7);';
+
+  if(S.mount==='acrilico-cuadrado'){
+    mountPlate.style.cssText='position:absolute;inset:-18px -22px;border-radius:10px;background:linear-gradient(160deg,rgba(220,230,245,.18) 0%,rgba(180,195,220,.12) 50%,rgba(200,215,235,.16) 100%);opacity:1;backdrop-filter:blur(1px);box-shadow:0 4px 28px rgba(0,0,0,.55),inset 0 0 0 1.5px rgba(255,255,255,.22),inset 0 1px 0 rgba(255,255,255,.35);';
+  }
+
+  if(S.mount==='acrilico-redondo'){
+    const w=signWrapper.offsetWidth+44, h=signWrapper.offsetHeight+44;
+    const side=Math.max(w,h);
+    const offsetX=(w-side)/2-22, offsetY=(h-side)/2-22;
+    mountPlate.style.cssText='position:absolute;width:'+side+'px;height:'+side+'px;left:'+offsetX+'px;top:'+offsetY+'px;border-radius:50%;background:linear-gradient(160deg,rgba(220,230,245,.18) 0%,rgba(180,195,220,.12) 50%,rgba(200,215,235,.16) 100%);opacity:1;backdrop-filter:blur(1px);box-shadow:0 4px 28px rgba(0,0,0,.55),inset 0 0 0 1.5px rgba(255,255,255,.22),inset 0 1px 0 rgba(255,255,255,.35);';
   }
 }
+
+
+// ════════════════════════════════════════
+// CHAR EDITOR — click en letra → mini menú
+// ════════════════════════════════════════
+const FONTS_LIST = [
+  {k:'Pacifico',       l:'Pacifico'},
+  {k:'Courgette',      l:'Courgette'},
+  {k:'Yellowtail',     l:'Yellowtail'},
+  {k:'Cookie',         l:'Cookie'},
+  {k:'Kaushan Script', l:'Kaushan'},
+  {k:'Comfortaa',      l:'Comfortaa'},
+  {k:'Nunito',         l:'Nunito'},
+  {k:'Raleway',        l:'Raleway'},
+  {k:'Righteous',      l:'Righteous'},
+  {k:'Orbitron',       l:'Orbitron'},
+];
+const COLORS_LIST = [
+  {c:'#b3f0ff',n:'Azul Hielo'},{c:'#ff2222',n:'Roja'},{c:'#ffb300',n:'Amber'},
+  {c:'#e8ff00',n:'Amarillo Limón'},{c:'#bf00ff',n:'Morado'},{c:'#00ff88',n:'Verde'},
+  {c:'#39ff14',n:'Verde Mars'},{c:'#3b82f6',n:'Azul'},{c:'#ff3cac',n:'Rosa'},
+  {c:'#ffd700',n:'Amarillo Dorado'},{c:'#ff8800',n:'Naranja'},{c:'#e8f4ff',n:'Blanca Fría'},
+];
+
+const charMenu      = document.getElementById('charMenu');
+// Evitar que pointerdown en el menú llegue al signWrapper (que capturaría el pointer)
+charMenu.addEventListener('pointerdown', e => e.stopPropagation());
+const cmenuFontName = document.getElementById('cmenuFontName');
+const cmenuColorBtn = document.getElementById('cmenuColorBtn');
+const cmenuColorSub = document.getElementById('cmenuColorSub');
+let activeCharIdx   = null;
+let cmenuFontIdx    = 0;   // índice actual en FONTS_LIST
+
+// Poblar submenu de colores
+COLORS_LIST.forEach(col => {
+  const sw = document.createElement('div');
+  sw.className = 'cmenu-csw';
+  sw.style.background = col.c;
+  sw.title = col.n;
+  sw.dataset.color = col.c;
+  cmenuColorSub.appendChild(sw);
+});
+
+function openCharMenu(spanEl){
+  const idx = parseInt(spanEl.dataset.idx);
+  activeCharIdx = idx;
+
+  neonEl.querySelectorAll('.nchar.selected').forEach(s => s.classList.remove('selected'));
+  spanEl.classList.add('selected');
+
+  const ov       = S.charOverrides[idx] || {};
+  const curFont  = ov.font  || S.font;
+  const curColor = ov.color || S.color;
+
+  // Posicionar carrusel en la fuente activa
+  cmenuFontIdx = FONTS_LIST.findIndex(f => f.k === curFont);
+  if(cmenuFontIdx < 0) cmenuFontIdx = 0;
+  updateFontCarousel();
+
+  // Color activo
+  cmenuColorBtn.style.background = curColor;
+  cmenuColorSub.querySelectorAll('.cmenu-csw').forEach(s =>
+    s.classList.toggle('on', s.dataset.color === curColor)
+  );
+  cmenuColorSub.classList.remove('open');
+
+  _repositionMenu(spanEl);
+  charMenu.classList.add('visible');
+}
+
+function closeCharMenu(){
+  charMenu.classList.remove('visible');
+  cmenuColorSub.classList.remove('open');
+  neonEl.querySelectorAll('.nchar.selected').forEach(s => s.classList.remove('selected'));
+  activeCharIdx = null;
+}
+
+function updateFontCarousel(){
+  const f = FONTS_LIST[cmenuFontIdx];
+  cmenuFontName.textContent   = f.l;
+  cmenuFontName.style.fontFamily = `'${f.k}', cursive`;
+}
+
+function applyCarouselFont(){
+  if(activeCharIdx === null) return;
+  if(!S.charOverrides[activeCharIdx]) S.charOverrides[activeCharIdx] = {};
+  S.charOverrides[activeCharIdx].font = FONTS_LIST[cmenuFontIdx].k;
+  renderNeon();
+}
+
+// Flechas carrusel
+document.getElementById('cmenuPrev').addEventListener('click', e => {
+  e.stopPropagation();
+  cmenuFontIdx = (cmenuFontIdx - 1 + FONTS_LIST.length) % FONTS_LIST.length;
+  updateFontCarousel(); applyCarouselFont();
+});
+document.getElementById('cmenuNext').addEventListener('click', e => {
+  e.stopPropagation();
+  cmenuFontIdx = (cmenuFontIdx + 1) % FONTS_LIST.length;
+  updateFontCarousel(); applyCarouselFont();
+});
+
+// Abrir/cerrar submenu color
+cmenuColorBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  cmenuColorSub.classList.toggle('open');
+});
+
+// Seleccionar color
+cmenuColorSub.addEventListener('click', e => {
+  const sw = e.target.closest('.cmenu-csw'); if(!sw) return;
+  e.stopPropagation();
+  if(activeCharIdx === null) return;
+  if(!S.charOverrides[activeCharIdx]) S.charOverrides[activeCharIdx] = {};
+  S.charOverrides[activeCharIdx].color = sw.dataset.color;
+  cmenuColorBtn.style.background = sw.dataset.color;
+  cmenuColorSub.querySelectorAll('.cmenu-csw').forEach(s => s.classList.toggle('on', s === sw));
+  cmenuColorSub.classList.remove('open');
+  renderNeon();
+});
+
+// Reset
+document.getElementById('cmenuReset').addEventListener('click', e => {
+  e.stopPropagation();
+  if(activeCharIdx === null) return;
+  delete S.charOverrides[activeCharIdx];
+  closeCharMenu();
+  renderNeon();
+});
+
+document.addEventListener('pointerdown', e => {
+  if(!charMenu.classList.contains('visible')) return;
+  if(charMenu.contains(e.target)) return;
+  if(e.target.closest('.nchar')) return;
+  closeCharMenu();
+});
+
+// Cerrar al empezar a arrastrar el letrero
+signWrapper.addEventListener('pointermove', () => {
+  if(dragging) closeCharMenu();
+});
+
+
+// ════════════════════════════════════════
+// ROTATE HANDLE
+// ════════════════════════════════════════
+const rotHandle   = document.getElementById('rotateHandle');
+const angleBadge  = document.getElementById('angleBadge');
+let rotating      = false;
+let rotStartAngle = 0;   // ángulo del pointer al inicio del drag
+let rotAtStart    = 0;   // S.rotation al inicio del drag
+
+function getAngleFromCenter(clientX, clientY){
+  const rect = signWrapper.getBoundingClientRect();
+  const cx   = rect.left + rect.width  / 2;
+  const cy   = rect.top  + rect.height / 2;
+  return Math.atan2(clientY - cy, clientX - cx) * (180 / Math.PI);
+}
+
+rotHandle.addEventListener('pointerdown', e => {
+  e.stopPropagation();
+  e.preventDefault();
+  rotating      = true;
+  rotStartAngle = getAngleFromCenter(e.clientX, e.clientY);
+  rotAtStart    = S.rotation;
+  rotHandle.setPointerCapture(e.pointerId);
+  rotHandle.classList.add('active');
+  angleBadge.classList.add('visible');
+});
+
+rotHandle.addEventListener('pointermove', e => {
+  if(!rotating) return;
+  const current = getAngleFromCenter(e.clientX, e.clientY);
+  let delta = current - rotStartAngle;
+  S.rotation = rotAtStart + delta;
+  // Snap a 0/90/180/270 si está cerca (±4°)
+  const snaps = [0, 90, 180, 270, -90, -180, -270, 360, -360];
+  const nearest = snaps.find(s => Math.abs((S.rotation % 360) - s) < 4 || Math.abs(S.rotation - s) < 4);
+  if(nearest !== undefined){
+    const diff = S.rotation - Math.round(S.rotation / 90) * 90;
+    if(Math.abs(diff) < 4) S.rotation = Math.round(S.rotation / 90) * 90;
+  }
+  applyTransform();
+  // Mostrar ángulo normalizado 0-359
+  const display = ((Math.round(S.rotation) % 360) + 360) % 360;
+  angleBadge.textContent = display + '°';
+});
+
+rotHandle.addEventListener('pointerup', () => {
+  rotating = false;
+  rotHandle.classList.remove('active');
+  setTimeout(() => angleBadge.classList.remove('visible'), 800);
+  scheduleHint();
+});
+
+// ════════════════════════════════════════
+// SIZE HINT — aparece solo cuando el letrero está quieto
+// ════════════════════════════════════════
+const sizeHint   = document.getElementById('sizeHint');
+let hintTimer    = null;
+let hintShown    = false;
+
+function scheduleHint(){
+  clearTimeout(hintTimer);
+  hideHint();
+  // Mostrar después de 1.5s de inactividad
+  hintTimer = setTimeout(showHint, 1500);
+}
+
+function showHint(){
+  if(hintShown) return;
+  hintShown = true;
+  sizeHint.style.opacity = '1';
+  // Ocultar automáticamente después de 3s
+  hintTimer = setTimeout(hideHint, 3000);
+}
+
+function hideHint(){
+  hintShown = false;
+  sizeHint.style.opacity = '0';
+  clearTimeout(hintTimer);
+}
+
+
+// ════════════════════════════════════════
+// TILT HANDLES — 3D perspective Y axis
+// ════════════════════════════════════════
+const tiltHandleY = document.getElementById('tiltHandleY');
+const tiltBadge   = document.getElementById('tiltBadge');
+let tilting       = false;
+let tiltStartX    = 0;
+let tiltAtStart   = 0;
+let tiltTimer     = null;
+
+tiltHandleY.addEventListener('pointerdown', e => {
+  e.stopPropagation(); e.preventDefault();
+  tilting      = true;
+  tiltStartX   = e.clientX;
+  tiltAtStart  = S.tiltY;
+  hideHint();
+  tiltHandleY.setPointerCapture(e.pointerId);
+  tiltHandleY.classList.add('active');
+  tiltBadge.classList.add('visible');
+});
+
+document.addEventListener('pointermove', e => {
+  if(!tilting) return;
+  // drag derecha → positivo → alejarse (rotateY positivo = gira hacia atrás por la derecha)
+  let val = tiltAtStart + (e.clientX - tiltStartX) * 0.4;
+  val = Math.max(-80, Math.min(80, val));
+  if(Math.abs(val) < 3) val = 0;
+  S.tiltY = val;
+  applyTransform();
+  const label = val > 0 ? `← frente  ${Math.round(val)}°  atrás →`
+                        : val < 0 ? `← frente  ${Math.round(val)}°  atrás →`
+                        : 'plano';
+  tiltBadge.textContent = Math.round(val) + '°';
+});
+
+document.addEventListener('pointerup', () => {
+  if(!tilting) return;
+  tilting = false;
+  tiltHandleY.classList.remove('active');
+  clearTimeout(tiltTimer);
+  tiltTimer = setTimeout(() => tiltBadge.classList.remove('visible'), 800);
+  scheduleHint();
+});
 
 // ════════════════════════════════════════
 // DRAG — letrero
 // ════════════════════════════════════════
 let dragging=false, dragStartX=0, dragStartY=0, posAtDragX=0, posAtDragY=0;
+let pointerDownTarget=null;
+let charPointerMoved=false;  // guardamos target ANTES de setPointerCapture
 signWrapper.addEventListener('pointerdown',e=>{
   if(e.target.closest('#resizeHandle')) return;
+  hideHint();
+  pointerDownTarget=e.target;  // el target real (puede ser un .nchar)
+  charPointerMoved=false;
   dragging=true; dragStartX=e.clientX; dragStartY=e.clientY;
   posAtDragX=S.posX; posAtDragY=S.posY;
   signWrapper.setPointerCapture(e.pointerId); e.preventDefault(); e.stopPropagation();
 });
 signWrapper.addEventListener('pointermove',e=>{
   if(!dragging) return;
-  S.posX=posAtDragX+(e.clientX-dragStartX);
-  S.posY=posAtDragY+(e.clientY-dragStartY);
+  const dx=e.clientX-dragStartX, dy=e.clientY-dragStartY;
+  if(Math.abs(dx)>4||Math.abs(dy)>4) charPointerMoved=true;
+  S.posX=posAtDragX+dx;
+  S.posY=posAtDragY+dy;
   applyTransform();
 });
-signWrapper.addEventListener('pointerup',()=>{ dragging=false; });
+signWrapper.addEventListener('pointerup',e=>{
+  dragging=false;
+  // Usar el target guardado en pointerdown (setPointerCapture lo sobreescribe en e.target)
+  if(!charPointerMoved){
+    const sp=pointerDownTarget && pointerDownTarget.closest('.nchar');
+    if(sp) openCharMenu(sp);
+  }
+  pointerDownTarget=null;
+  scheduleHint();
+});
 
 // DRAG — fondo
 let bgDragging=false, bgStartX=0, bgStartY=0, bgAtX=50, bgAtY=50;
@@ -597,9 +1256,9 @@ previewCanvas.addEventListener('pointerup',()=>{ bgDragging=false; previewCanvas
 // ════════════════════════════════════════
 const rHandle=document.getElementById('resizeHandle');
 let resizing=false, resizeStartX=0, scaleAtResize=1;
-rHandle.addEventListener('pointerdown',e=>{ resizing=true; resizeStartX=e.clientX; scaleAtResize=S.scale; rHandle.setPointerCapture(e.pointerId); e.stopPropagation(); e.preventDefault(); });
+rHandle.addEventListener('pointerdown',e=>{ hideHint(); resizing=true; resizeStartX=e.clientX; scaleAtResize=S.scale; rHandle.setPointerCapture(e.pointerId); e.stopPropagation(); e.preventDefault(); });
 rHandle.addEventListener('pointermove',e=>{ if(!resizing)return; S.scale=Math.max(.15,Math.min(3,scaleAtResize+(e.clientX-resizeStartX)*.006)); renderNeon(); updateDimBadge(); });
-rHandle.addEventListener('pointerup',()=>{ resizing=false; });
+rHandle.addEventListener('pointerup',()=>{ resizing=false; scheduleHint(); });
 
 previewCanvas.addEventListener('wheel',e=>{ e.preventDefault(); S.scale=Math.max(.15,Math.min(3,S.scale-e.deltaY*.001)); renderNeon(); updateDimBadge(); },{passive:false});
 
@@ -618,7 +1277,7 @@ function getPinchDist(t){return Math.hypot(t[0].clientX-t[1].clientX,t[0].client
 document.getElementById('textInput').addEventListener('input',function(){
   const v=this.value.slice(0,60); this.value=v; S.text=v;
   document.getElementById('charCount').textContent=v.length+' caracteres';
-  recalcFontSize(); updateDimBadge(); dots();
+  S.charOverrides={}; closeCharMenu(); recalcFontSize(); updateDimBadge(); dots();
 });
 document.getElementById('fontGrid').addEventListener('click',e=>{
   const b=e.target.closest('.fbtn'); if(!b)return;
@@ -643,19 +1302,33 @@ document.getElementById('wallGrid').addEventListener('click',e=>{
 document.getElementById('mountGrid').addEventListener('click',e=>{
   const b=e.target.closest('.mbtn'); if(!b)return;
   document.querySelectorAll('.mbtn').forEach(x=>x.classList.remove('on'));
-  b.classList.add('on'); S.mount=b.dataset.m; applyMount(); dots();
+  b.classList.add('on'); S.mount=b.dataset.m;
+  // Si se vuelve a "libre", restaurar el backing si estaba activo
+  if(S.mount==='libre' && S.backing) drawAcrylic();
+  applyMount(); dots();
 });
 
 document.getElementById('tBacking').addEventListener('change',function(){
-  S.backing=this.checked; if(S.backing) drawAcrylic(); else { acrylicCvs.style.opacity='0'; } dots();
+  S.backing=this.checked;
+  if(S.backing){
+    // Quitar montaje para evitar sobreposición
+    if(S.mount!=='libre'){
+      S.mount='libre';
+      document.querySelectorAll('.mbtn').forEach(x=>x.classList.remove('on'));
+      document.querySelector('.mbtn[data-m="libre"]').classList.add('on');
+      mountPlate.style.cssText=''; mountHook.style.display='none';
+      mountBase.style.display='none'; mountScrews.style.display='none';
+    }
+    drawAcrylic();
+  } else {
+    acrylicCvs.style.opacity='0';
+  }
+  dots();
 });
 document.getElementById('tRgb').addEventListener('change',function(){ S.rgb=this.checked; this.checked?startRGB():stopRGB(); dots(); });
 document.getElementById('tFlicker').addEventListener('change',function(){ S.flicker=this.checked; neonEl.classList.toggle('flicker',this.checked); dots(); });
 document.getElementById('tDimmer').addEventListener('change',function(){ S.dimmer=this.checked; neonEl.classList.toggle('dimmed',this.checked); dots(); });
-document.getElementById('tOutdoor').addEventListener('change',function(){
-  S.outdoor=this.checked; rainCvs.style.display=this.checked?'block':'none';
-  this.checked?startRain():stopRain(); dots();
-});
+
 document.getElementById('tPower').addEventListener('change',function(){
   S.power=this.checked;
   if(this.checked){ renderNeon(); neonEl.classList.toggle('flicker',S.flicker); neonEl.classList.toggle('dimmed',S.dimmer); }
@@ -719,10 +1392,10 @@ function shareDesign(){
 // ════════════════════════════════════════
 function dots(){
   const checks=[
-    S.text.trim().length>0, S.font!=='Pacifico', S.color!=='#fff',
+    S.text.trim().length>0, S.font!=='Pacifico', S.color!=='#b3f0ff',
     !!document.querySelector('.wbtn.on:not(:first-child)'),
     S.mount!=='libre',
-    S.backing||S.rgb||S.flicker||S.dimmer||S.outdoor,
+    S.backing||S.rgb||S.flicker||S.dimmer,
   ];
   checks.forEach((ok,i)=>document.getElementById('d'+(i+1)).classList.toggle('on',ok));
   document.getElementById('d1').classList.add('on');
@@ -812,6 +1485,7 @@ window.addEventListener('resize',()=>{
 // INIT
 // ════════════════════════════════════════
 recalcFontSize();  // calcula currentFS según el canvas inicial, luego renderiza
+scheduleHint();
 applyMount();
 dots();
 initMobileSheet();
