@@ -133,10 +133,11 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
   position:relative;
   z-index:2;
   transition:color .2s,text-shadow .2s;
+  paint-order:stroke fill;
 }
 
-#resizeHandle{position:absolute;bottom:-8px;right:-8px;width:22px;height:22px;background:var(--accent);border-radius:50%;cursor:se-resize;border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:20;transition:transform .15s;}
-#resizeHandle:hover{transform:scale(1.2);}
+#resizeHandle{position:absolute;bottom:-8px;right:-8px;width:22px;height:22px;background:rgba(20,20,30,.85);border-radius:50%;cursor:se-resize;border:2px solid rgba(255,255,255,.55);box-shadow:0 2px 8px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:20;transition:background .15s,transform .15s;}
+#resizeHandle:hover{background:rgba(217,59,62,.9);border-color:#fff;transform:scale(1.15);}
 #resizeHandle svg{width:10px;height:10px;}
 
 #sizeHint{
@@ -700,7 +701,8 @@ function startRGB(){
   rgbInt = setInterval(()=>{
     currentRGBColor = RGB_COLORS[ri++ % RGB_COLORS.length];
     neonEl.style.color = currentRGBColor;
-    neonEl.style.textShadow = `0 0 3px ${currentRGBColor},0 0 8px ${currentRGBColor},0 0 18px ${currentRGBColor}`;
+    neonEl.style.textShadow = tubeShadow(currentRGBColor);
+    neonEl.style.webkitTextStroke = tubeStroke(currentRGBColor);
     if(S.backing) drawAcrylic();
   }, 700);
 }
@@ -805,6 +807,54 @@ function _renderAcrylic(){
   acrylicCvs.style.opacity = '1';
 }
 
+
+// ════════════════════════════════════════
+// NEON TUBE — genera sombras 3D de tubo
+// ════════════════════════════════════════
+function hexToRgb(hex){
+  const r=parseInt(hex.slice(1,3),16);
+  const g=parseInt(hex.slice(3,5),16);
+  const b=parseInt(hex.slice(5,7),16);
+  return {r,g,b};
+}
+function darken(hex, factor){
+  const {r,g,b}=hexToRgb(hex);
+  return `rgb(${Math.round(r*factor)},${Math.round(g*factor)},${Math.round(b*factor)})`;
+}
+function rgba(hex, a){
+  const {r,g,b}=hexToRgb(hex);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+function tubeShadow(c){
+  // c = neon color hex
+  // Tube depth layers: offset going bottom-right simulating 3D extrusion
+  // Each step is 1px further, getting darker (inner tube walls)
+  const d1 = darken(c, 0.75);
+  const d2 = darken(c, 0.55);
+  const d3 = darken(c, 0.38);
+  const d4 = darken(c, 0.22);
+  return [
+    // Tube body — 4 layers of depth, offset 1–4px bottom-right
+    `1px 1px 0 ${d1}`,
+    `2px 2px 0 ${d2}`,
+    `3px 3px 0 ${d3}`,
+    `4px 4px 0 ${d4}`,
+    // Backing plate — white flat base, slightly further
+    `5px 5px 0 rgba(255,255,255,0.85)`,
+    `6px 6px 1px rgba(0,0,0,0.3)`,   // drop shadow of backing
+    // Glow halo (centered, no offset)
+    `0 0 3px ${c}`,
+    `0 0 8px ${c}`,
+    `0 0 18px ${rgba(c,0.7)}`,
+  ].join(',');
+}
+
+function tubeStroke(c){
+  // Subtle stroke to define the tube outline
+  return `1px ${darken(c, 0.6)}`;
+}
+
 // ════════════════════════════════════════
 // RENDER NEON TEXT
 // ════════════════════════════════════════
@@ -830,7 +880,8 @@ function buildNeonSpans(){
         sp.style.color = ov.color;
         if(S.power){
           const c = ov.color;
-          sp.style.textShadow = `0 0 3px ${c},0 0 8px ${c},0 0 18px ${c}`;
+          sp.style.textShadow = tubeShadow(c);
+          sp.style.webkitTextStroke = tubeStroke(c);
         }
       }
     }
@@ -869,10 +920,12 @@ function renderNeon(){
   if(!S.power){
     neonEl.style.color = '#5a5a5a';
     neonEl.style.textShadow = 'none';
+    neonEl.style.webkitTextStroke = '0px transparent';
     buildNeonSpans();
     // overrides: sin glow cuando apagado
     neonEl.querySelectorAll('.nchar').forEach(sp => {
       sp.style.textShadow = 'none';
+      sp.style.webkitTextStroke = '0px transparent';
       sp.style.color = '';
     });
     if(S.backing) drawAcrylic();
@@ -881,7 +934,8 @@ function renderNeon(){
 
   const c = (S.rgb && rgbInt) ? currentRGBColor : S.color;
   neonEl.style.color = c;
-  neonEl.style.textShadow = `0 0 3px ${c},0 0 8px ${c},0 0 18px ${c}`;
+  neonEl.style.textShadow = tubeShadow(c);
+  neonEl.style.webkitTextStroke = tubeStroke(c);
 
   buildNeonSpans();
 
