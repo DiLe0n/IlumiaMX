@@ -448,6 +448,34 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
   transition:opacity .15s;
 }
 #tiltBadge.visible{ opacity:1; }
+
+body.preview-mode header,
+body.preview-mode .sidebar,
+body.preview-mode .preview-bar {
+  display: none !important;
+}
+
+body.preview-mode .sidebar {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+body.preview-mode .preview-col {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: #000;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+body.preview-mode .preview-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  aspect-ratio: auto !important;
+  max-width: none !important;
+  max-height: none !important;
+}
 </style>
 </head>
 <body>
@@ -566,10 +594,8 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
   <div class="preview-bar">
     <div class="bar-label">Vista previa · Arrastra y redimensiona el letrero</div>
     <div class="bar-actions">
-      <button class="ibtn" id="btnFlicker" onclick="toggleFlicker()">⚡ <span class="btn-text">Parpadeo</span></button>
       <button class="ibtn" onclick="resetPosition()">⊙ <span class="btn-text">Centrar</span></button>
-      <button class="ibtn" onclick="downloadPreview()">⬇ <span class="btn-text">Guardar</span></button>
-      <button class="ibtn" id="btnShare" onclick="shareDesign()">🔗 <span class="btn-text">Compartir</span></button>
+      <button class="ibtn" id="btnPreview">👁 <span class="btn-text">Preview</span></button>
     </div>
   </div>
   <div class="preview-canvas" id="previewCanvas"
@@ -658,9 +684,6 @@ const acrylicCtx    = acrylicCvs.getContext('2d');
 
 // ════════════════════════════════════════
 // FONT-SIZE DINÁMICO
-// El tamaño base se calcula según el ancho real del canvas y la
-// longitud del texto, para que en móvil NUNCA desborde ni se deforme.
-// S.scale es el "zoom" manual del usuario encima de este tamaño base.
 // ════════════════════════════════════════
 function calcBaseFontSize() {
   const cw = previewCanvas.offsetWidth  || 800;
@@ -669,23 +692,16 @@ function calcBaseFontSize() {
   const lines  = (S.text || 'A').split('\n');
   const maxLen = Math.max(...lines.map(l => l.length), 1);
 
-  // Fuentes script/display tienen ~0.58 de avance por carácter a 1px
   const fsFromW = (cw * 0.78) / (maxLen * 0.58);
-  // Vertical: el bloque no debe pasar del 65% del alto del canvas
   const fsFromH = (ch * 0.65) / (lines.length * 1.2);
 
-  // Techo: 72px en desktop, 48px en móvil (canvas < 600px ancho)
   const fsCeil = cw < 600 ? 48 : 72;
 
   return Math.max(14, Math.min(fsCeil, fsFromW, fsFromH));
 }
 
-// Variable que guarda el BASE_FS calculado actualmente (lo usan
-// _renderAcrylic y renderNeon para que estén sincronizados)
 let currentFS = 72;
 
-// Recalcula currentFS y re-renderiza. Llamar SOLO cuando cambia
-// el texto o la fuente — NUNCA por resize de ventana.
 function recalcFontSize(){
   currentFS = calcBaseFontSize();
   renderNeon();
@@ -709,14 +725,13 @@ function startRGB(){
 function stopRGB(){ clearInterval(rgbInt); currentRGBColor = RGB_COLORS[0]; renderNeon(); }
 
 // ════════════════════════════════════════
-// ACRYLIC — anillo que sigue la silueta del texto
+// ACRYLIC
 // ════════════════════════════════════════
 let acrylicRaf = null;
 
 function drawAcrylic(){
   if(!S.backing){ acrylicCvs.style.opacity='0'; return; }
   cancelAnimationFrame(acrylicRaf);
-  // Dos frames: 1º DOM actualiza font-size, 2º browser re-calcula offsetWidth/Height
   acrylicRaf = requestAnimationFrame(()=> requestAnimationFrame(()=> _renderAcrylic()));
 }
 
@@ -737,10 +752,8 @@ function _renderAcrylic(){
   acrylicCvs.style.top      = (nT - PAD) + 'px';
   acrylicCvs.style.position = 'absolute';
 
-  // — Reproducir el texto exactamente como el CSS de neonEl —
-  // CSS: font-size = currentFS px, line-height 1.2, padding 16px 28px
   const lines   = (S.text || ' ').split('\n');
-  const fs      = currentFS;   // ← usa el mismo fs que renderNeon aplicó
+  const fs      = currentFS;
   const lh      = fs * 1.2;
 
   const off = new OffscreenCanvas(cvW, cvH);
@@ -750,19 +763,15 @@ function _renderAcrylic(){
   ox.textBaseline = 'alphabetic';
   ox.fillStyle    = '#fff';
 
-  // Métricas reales de la fuente
   const met         = ox.measureText('Mg');
   const ascent      = met.fontBoundingBoxAscent  || fs * 0.78;
   const descent     = met.fontBoundingBoxDescent || fs * 0.22;
   const halfLeading = (lh - (ascent + descent)) / 2;
 
-  // Baseline de la primera línea:
-  // PAD (margen canvas) + 16 (padding-top CSS) + halfLeading + ascent
   const firstBaseline = PAD + 16 + halfLeading + ascent;
 
   lines.forEach((ln, i) => ox.fillText(ln || ' ', cvW / 2, firstBaseline + i * lh));
 
-  // — Dilatar la silueta —
   function threshold(src, blurR, thr){
     const s = new OffscreenCanvas(cvW, cvH);
     const c = s.getContext('2d');
@@ -773,24 +782,20 @@ function _renderAcrylic(){
     return s;
   }
 
-  const silOuter = threshold(off,      16,  15);  // dilatado → contorno exterior
-  const silInner = threshold(silOuter,  3, 180);  // erosionado → interior
+  const silOuter = threshold(off,      16,  15);
+  const silInner = threshold(silOuter,  3, 180);
 
-  // — Silueta completa (silOuter) con estilo acrílico translúcido —
   const ring = new OffscreenCanvas(cvW, cvH);
   const rc   = ring.getContext('2d');
-  // Gradiente acrílico igual que los montajes de placa
   const grad = rc.createLinearGradient(0, 0, cvW * 0.7, cvH);
   grad.addColorStop(0,   'rgba(220,230,245,0.22)');
   grad.addColorStop(0.5, 'rgba(180,195,220,0.15)');
   grad.addColorStop(1,   'rgba(200,215,235,0.20)');
   rc.fillStyle = grad;
   rc.fillRect(0, 0, cvW, cvH);
-  // Recortar a la silueta exterior del texto
   rc.globalCompositeOperation = 'destination-in';
   rc.drawImage(silOuter, 0, 0);
 
-  // Borde brillante interior: línea blanca translúcida en el borde de la silueta
   const rim = new OffscreenCanvas(cvW, cvH);
   const rm  = rim.getContext('2d');
   rm.fillStyle = 'rgba(255,255,255,0.28)';
@@ -809,7 +814,7 @@ function _renderAcrylic(){
 
 
 // ════════════════════════════════════════
-// NEON TUBE — genera sombras 3D de tubo
+// NEON TUBE
 // ════════════════════════════════════════
 function hexToRgb(hex){
   const r=parseInt(hex.slice(1,3),16);
@@ -827,23 +832,17 @@ function rgba(hex, a){
 }
 
 function tubeShadow(c){
-  // c = neon color hex
-  // Tube depth layers: offset going bottom-right simulating 3D extrusion
-  // Each step is 1px further, getting darker (inner tube walls)
   const d1 = darken(c, 0.75);
   const d2 = darken(c, 0.55);
   const d3 = darken(c, 0.38);
   const d4 = darken(c, 0.22);
   return [
-    // Tube body — 4 layers of depth, offset 1–4px bottom-right
     `1px 1px 0 ${d1}`,
     `2px 2px 0 ${d2}`,
     `3px 3px 0 ${d3}`,
     `4px 4px 0 ${d4}`,
-    // Backing plate — white flat base, slightly further
     `5px 5px 0 rgba(255,255,255,0.85)`,
-    `6px 6px 1px rgba(0,0,0,0.3)`,   // drop shadow of backing
-    // Glow halo (centered, no offset)
+    `6px 6px 1px rgba(0,0,0,0.3)`,
     `0 0 3px ${c}`,
     `0 0 8px ${c}`,
     `0 0 18px ${rgba(c,0.7)}`,
@@ -851,7 +850,6 @@ function tubeShadow(c){
 }
 
 function tubeStroke(c){
-  // Subtle stroke to define the tube outline
   return `1px ${darken(c, 0.6)}`;
 }
 
@@ -885,11 +883,9 @@ function buildNeonSpans(){
         }
       }
     }
-    // Re-marcar el span activo si el menú está abierto
     if(i === activeCharIdx) sp.classList.add('selected');
     neonEl.appendChild(sp);
   }
-  // Reposicionar el menú sobre el span recién creado
   if(activeCharIdx !== null && charMenu.classList.contains('visible')){
     const freshSpan = neonEl.querySelector(`.nchar[data-idx="${activeCharIdx}"]`);
     if(freshSpan) _repositionMenu(freshSpan);
@@ -908,8 +904,6 @@ function _repositionMenu(spanEl){
 }
 
 function renderNeon(){
-  // Aplica currentFS tal como está — solo se recalcula cuando
-  // el usuario cambia el texto o la fuente (no en resize)
   neonEl.style.fontFamily = `'${S.font}', cursive`;
   neonEl.style.fontSize   = currentFS + 'px';
 
@@ -922,7 +916,6 @@ function renderNeon(){
     neonEl.style.textShadow = 'none';
     neonEl.style.webkitTextStroke = '0px transparent';
     buildNeonSpans();
-    // overrides: sin glow cuando apagado
     neonEl.querySelectorAll('.nchar').forEach(sp => {
       sp.style.textShadow = 'none';
       sp.style.webkitTextStroke = '0px transparent';
@@ -964,7 +957,6 @@ function applyMount(){
   mountPlate.style.cssText=''; mountHook.style.display='none';
   mountBase.style.display='none'; mountScrews.style.display='none';
 
-  // Montajes con placa propia ocultan el backing acrílico para evitar sobreposición
   const hasPlate = ['acrilico-cuadrado','acrilico-redondo','colgar'].includes(S.mount);
   if(hasPlate && S.backing){
     acrylicCvs.style.opacity='0';
@@ -991,7 +983,7 @@ function applyMount(){
 
 
 // ════════════════════════════════════════
-// CHAR EDITOR — click en letra → mini menú
+// CHAR EDITOR
 // ════════════════════════════════════════
 const FONTS_LIST = [
   {k:'Pacifico',       l:'Pacifico'},
@@ -1013,15 +1005,13 @@ const COLORS_LIST = [
 ];
 
 const charMenu      = document.getElementById('charMenu');
-// Evitar que pointerdown en el menú llegue al signWrapper (que capturaría el pointer)
 charMenu.addEventListener('pointerdown', e => e.stopPropagation());
 const cmenuFontName = document.getElementById('cmenuFontName');
 const cmenuColorBtn = document.getElementById('cmenuColorBtn');
 const cmenuColorSub = document.getElementById('cmenuColorSub');
 let activeCharIdx   = null;
-let cmenuFontIdx    = 0;   // índice actual en FONTS_LIST
+let cmenuFontIdx    = 0;
 
-// Poblar submenu de colores
 COLORS_LIST.forEach(col => {
   const sw = document.createElement('div');
   sw.className = 'cmenu-csw';
@@ -1042,12 +1032,10 @@ function openCharMenu(spanEl){
   const curFont  = ov.font  || S.font;
   const curColor = ov.color || S.color;
 
-  // Posicionar carrusel en la fuente activa
   cmenuFontIdx = FONTS_LIST.findIndex(f => f.k === curFont);
   if(cmenuFontIdx < 0) cmenuFontIdx = 0;
   updateFontCarousel();
 
-  // Color activo
   cmenuColorBtn.style.background = curColor;
   cmenuColorSub.querySelectorAll('.cmenu-csw').forEach(s =>
     s.classList.toggle('on', s.dataset.color === curColor)
@@ -1078,7 +1066,6 @@ function applyCarouselFont(){
   renderNeon();
 }
 
-// Flechas carrusel
 document.getElementById('cmenuPrev').addEventListener('click', e => {
   e.stopPropagation();
   cmenuFontIdx = (cmenuFontIdx - 1 + FONTS_LIST.length) % FONTS_LIST.length;
@@ -1090,13 +1077,11 @@ document.getElementById('cmenuNext').addEventListener('click', e => {
   updateFontCarousel(); applyCarouselFont();
 });
 
-// Abrir/cerrar submenu color
 cmenuColorBtn.addEventListener('click', e => {
   e.stopPropagation();
   cmenuColorSub.classList.toggle('open');
 });
 
-// Seleccionar color
 cmenuColorSub.addEventListener('click', e => {
   const sw = e.target.closest('.cmenu-csw'); if(!sw) return;
   e.stopPropagation();
@@ -1109,7 +1094,6 @@ cmenuColorSub.addEventListener('click', e => {
   renderNeon();
 });
 
-// Reset
 document.getElementById('cmenuReset').addEventListener('click', e => {
   e.stopPropagation();
   if(activeCharIdx === null) return;
@@ -1125,7 +1109,6 @@ document.addEventListener('pointerdown', e => {
   closeCharMenu();
 });
 
-// Cerrar al empezar a arrastrar el letrero
 signWrapper.addEventListener('pointermove', () => {
   if(dragging) closeCharMenu();
 });
@@ -1137,8 +1120,8 @@ signWrapper.addEventListener('pointermove', () => {
 const rotHandle   = document.getElementById('rotateHandle');
 const angleBadge  = document.getElementById('angleBadge');
 let rotating      = false;
-let rotStartAngle = 0;   // ángulo del pointer al inicio del drag
-let rotAtStart    = 0;   // S.rotation al inicio del drag
+let rotStartAngle = 0;
+let rotAtStart    = 0;
 
 function getAngleFromCenter(clientX, clientY){
   const rect = signWrapper.getBoundingClientRect();
@@ -1163,7 +1146,6 @@ rotHandle.addEventListener('pointermove', e => {
   const current = getAngleFromCenter(e.clientX, e.clientY);
   let delta = current - rotStartAngle;
   S.rotation = rotAtStart + delta;
-  // Snap a 0/90/180/270 si está cerca (±4°)
   const snaps = [0, 90, 180, 270, -90, -180, -270, 360, -360];
   const nearest = snaps.find(s => Math.abs((S.rotation % 360) - s) < 4 || Math.abs(S.rotation - s) < 4);
   if(nearest !== undefined){
@@ -1171,7 +1153,6 @@ rotHandle.addEventListener('pointermove', e => {
     if(Math.abs(diff) < 4) S.rotation = Math.round(S.rotation / 90) * 90;
   }
   applyTransform();
-  // Mostrar ángulo normalizado 0-359
   const display = ((Math.round(S.rotation) % 360) + 360) % 360;
   angleBadge.textContent = display + '°';
 });
@@ -1184,7 +1165,7 @@ rotHandle.addEventListener('pointerup', () => {
 });
 
 // ════════════════════════════════════════
-// SIZE HINT — aparece solo cuando el letrero está quieto
+// SIZE HINT
 // ════════════════════════════════════════
 const sizeHint   = document.getElementById('sizeHint');
 let hintTimer    = null;
@@ -1193,7 +1174,6 @@ let hintShown    = false;
 function scheduleHint(){
   clearTimeout(hintTimer);
   hideHint();
-  // Mostrar después de 1.5s de inactividad
   hintTimer = setTimeout(showHint, 1500);
 }
 
@@ -1201,7 +1181,6 @@ function showHint(){
   if(hintShown) return;
   hintShown = true;
   sizeHint.style.opacity = '1';
-  // Ocultar automáticamente después de 3s
   hintTimer = setTimeout(hideHint, 3000);
 }
 
@@ -1213,7 +1192,7 @@ function hideHint(){
 
 
 // ════════════════════════════════════════
-// TILT HANDLES — 3D perspective Y axis
+// TILT HANDLES
 // ════════════════════════════════════════
 const tiltHandleY = document.getElementById('tiltHandleY');
 const tiltBadge   = document.getElementById('tiltBadge');
@@ -1235,15 +1214,11 @@ tiltHandleY.addEventListener('pointerdown', e => {
 
 document.addEventListener('pointermove', e => {
   if(!tilting) return;
-  // drag derecha → positivo → alejarse (rotateY positivo = gira hacia atrás por la derecha)
   let val = tiltAtStart + (e.clientX - tiltStartX) * 0.4;
   val = Math.max(-80, Math.min(80, val));
   if(Math.abs(val) < 3) val = 0;
   S.tiltY = val;
   applyTransform();
-  const label = val > 0 ? `← frente  ${Math.round(val)}°  atrás →`
-                        : val < 0 ? `← frente  ${Math.round(val)}°  atrás →`
-                        : 'plano';
   tiltBadge.textContent = Math.round(val) + '°';
 });
 
@@ -1261,11 +1236,11 @@ document.addEventListener('pointerup', () => {
 // ════════════════════════════════════════
 let dragging=false, dragStartX=0, dragStartY=0, posAtDragX=0, posAtDragY=0;
 let pointerDownTarget=null;
-let charPointerMoved=false;  // guardamos target ANTES de setPointerCapture
+let charPointerMoved=false;
 signWrapper.addEventListener('pointerdown',e=>{
   if(e.target.closest('#resizeHandle')) return;
   hideHint();
-  pointerDownTarget=e.target;  // el target real (puede ser un .nchar)
+  pointerDownTarget=e.target;
   charPointerMoved=false;
   dragging=true; dragStartX=e.clientX; dragStartY=e.clientY;
   posAtDragX=S.posX; posAtDragY=S.posY;
@@ -1281,7 +1256,6 @@ signWrapper.addEventListener('pointermove',e=>{
 });
 signWrapper.addEventListener('pointerup',e=>{
   dragging=false;
-  // Usar el target guardado en pointerdown (setPointerCapture lo sobreescribe en e.target)
   if(!charPointerMoved){
     const sp=pointerDownTarget && pointerDownTarget.closest('.nchar');
     if(sp) openCharMenu(sp);
@@ -1357,7 +1331,6 @@ document.getElementById('mountGrid').addEventListener('click',e=>{
   const b=e.target.closest('.mbtn'); if(!b)return;
   document.querySelectorAll('.mbtn').forEach(x=>x.classList.remove('on'));
   b.classList.add('on'); S.mount=b.dataset.m;
-  // Si se vuelve a "libre", restaurar el backing si estaba activo
   if(S.mount==='libre' && S.backing) drawAcrylic();
   applyMount(); dots();
 });
@@ -1365,7 +1338,6 @@ document.getElementById('mountGrid').addEventListener('click',e=>{
 document.getElementById('tBacking').addEventListener('change',function(){
   S.backing=this.checked;
   if(S.backing){
-    // Quitar montaje para evitar sobreposición
     if(S.mount!=='libre'){
       S.mount='libre';
       document.querySelectorAll('.mbtn').forEach(x=>x.classList.remove('on'));
@@ -1500,6 +1472,73 @@ function switchTab(idx){
 }
 
 // ════════════════════════════════════════
+// PREVIEW MODE — con escala proporcional al canvas
+// ════════════════════════════════════════
+const btnPreview = document.getElementById('btnPreview');
+let previewActive = false;
+// Snapshot del estado antes de entrar al preview
+let previewSnapshot = null;
+
+btnPreview.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (previewActive) return;
+
+  // Medir el canvas con precisión subpíxel ANTES de activar preview-mode
+  const rectBefore = previewCanvas.getBoundingClientRect();
+
+  previewActive = true;
+  document.body.classList.add('preview-mode');
+
+  // Esperar que el browser complete el reflow del nuevo layout
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const rectAfter = previewCanvas.getBoundingClientRect();
+
+      // Ratio independiente por eje
+      const ratioW = rectAfter.width  / (rectBefore.width  || 1);
+      const ratioH = rectAfter.height / (rectBefore.height || 1);
+
+      // El fondo usa background-size:cover → escala por el eje que MÁS creció.
+      // El letrero tiene que seguir la misma lógica para mantenerse en proporción.
+      const ratio = Math.max(ratioW, ratioH);
+
+      // Guardar estado para restaurar al salir
+      previewSnapshot = {
+        scale: S.scale,
+        posX:  S.posX,
+        posY:  S.posY,
+      };
+
+      // Aplicar el mismo factor de escala al letrero y a su posición
+      S.scale = S.scale * ratio;
+      S.posX  = S.posX  * ratioW;   // posición X escala por el ratio del eje X
+      S.posY  = S.posY  * ratioH;   // posición Y escala por el ratio del eje Y
+      applyTransform();
+      updateDimBadge();
+    });
+  });
+
+  document.addEventListener('click', exitPreview);
+});
+
+function exitPreview() {
+  if (!previewActive) return;
+  previewActive = false;
+  document.body.classList.remove('preview-mode');
+  document.removeEventListener('click', exitPreview);
+
+  // Restaurar escala y posición exactas antes del preview
+  if (previewSnapshot) {
+    S.scale = previewSnapshot.scale;
+    S.posX  = previewSnapshot.posX;
+    S.posY  = previewSnapshot.posY;
+    previewSnapshot = null;
+    applyTransform();
+    updateDimBadge();
+  }
+}
+
+// ════════════════════════════════════════
 // URL PARAMS
 // ════════════════════════════════════════
 (function(){
@@ -1510,9 +1549,7 @@ function switchTab(idx){
 })();
 
 // ════════════════════════════════════════
-// RESIZE OBSERVER
-// Solo actualiza la posición/transform — NO recalcula font-size.
-// El tamaño del texto solo cambia cuando el usuario edita el texto o la fuente.
+// RESIZE OBSERVER — solo actualiza posición/transform
 // ════════════════════════════════════════
 if(window.ResizeObserver){
   new ResizeObserver(()=> applyTransform()).observe(previewCanvas);
@@ -1531,14 +1568,13 @@ window.addEventListener('resize',()=>{
     document.getElementById('sheetHandle').style.display='none';
     document.getElementById('sheetTabs').style.display='none';
   }
-  // Solo actualiza posición, NO el font-size
   applyTransform();
 });
 
 // ════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════
-recalcFontSize();  // calcula currentFS según el canvas inicial, luego renderiza
+recalcFontSize();
 scheduleHint();
 applyMount();
 dots();
