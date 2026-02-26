@@ -291,7 +291,7 @@ body.preview-mode .preview-canvas{width:100%!important;height:100%!important;asp
 
 <header>
   <div class="logo">ILUMIA<em>MX</em></div>
-  <div class="header-mid">Diseñador de Letreros</div>
+  <div class="header-mid">Cotizador de anuncios</div>
   <div class="dots">
     <div class="dot on" id="d1"></div><div class="dot" id="d2"></div>
     <div class="dot" id="d3"></div><div class="dot" id="d4"></div>
@@ -307,7 +307,7 @@ body.preview-mode .preview-canvas{width:100%!important;height:100%!important;asp
 
   <div class="block" data-tab="Texto" data-idx="0">
     <div class="bhead"><span class="num">1</span><span class="blabel">Tu Texto</span></div>
-    <textarea id="textInput" placeholder="Escribe tu texto aquí&#10;(Enter = nueva línea)">Hello World</textarea>
+    <textarea id="textInput" placeholder="Escribe tu texto aquí&#10;(Enter = nueva línea)">Aqui tu texto</textarea>
     <div class="char-row"><span id="charCount">11 caracteres</span><span>Máx. 80</span></div>
   </div>
 
@@ -618,7 +618,7 @@ function _renderAcrylic(){
         // 2. ASCENDENTES / MAYÚSCULAS: Rellenamos hacia arriba (H, W, l, k, t...)
         if (isUpper || hasAscender) {
             // Un poco más angosto (80% de pWidth) en la parte superior para evitar esquinas cuadradas en letras curvas
-            ctx.fillRect(cx - (pWidth * 0.8)/2, sy - fs * 0.74, pWidth * 0.8, fs * 0.29);
+            ctx.fillRect(cx - (pWidth * 0.9)/2, sy - fs * 0.80, pWidth * 0.95, fs * 0.50);
         }
 
         // 3. DESCENDENTES: Rellenamos hacia abajo (g, j, p, y, q...)
@@ -631,7 +631,7 @@ function _renderAcrylic(){
   // =========================================================
   // --- TU MEDIDA INTOCABLE DE GROSOR (Borde elegante) ---
   // =========================================================
-  ctx.lineWidth = fs * 0.14; 
+  ctx.lineWidth = fs * 0.10; 
   ctx.strokeStyle = '#fff';
   ctx.textBaseline = 'alphabetic';
   ctx.lineJoin = 'round';
