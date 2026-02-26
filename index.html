@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Diseñador de Neón</title>
-<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300&family=Nunito:wght@300&family=Pacifico&family=Courgette&family=Yellowtail&family=Cookie&family=Kaushan+Script&family=Righteous&family=Orbitron:wght@400&family=Raleway:wght@300&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300&family=Nunito:wght@300&family=Pacifico&family=Courgette&family=Yellowtail&family=Cookie&family=Kaushan+Script&family=Righteous&family=Orbitron:wght@400&family=Raleway:wght@300&family=Dancing+Script:wght@400;700&family=Great+Vibes&family=Sacramento&family=Lobster&family=Satisfy&family=Caveat:wght@400;700&family=Amatic+SC:wght@400;700&family=Permanent+Marker&family=Rock+Salt&family=Monoton&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg:#f2f0ec; --panel:#fff; --panel2:#f7f5f2;
@@ -72,103 +72,112 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
 .toggle input:checked+.tslider{background:var(--accent);}
 .toggle input:checked+.tslider::before{transform:translateX(17px);}
 
+/* ─── Preview bar ─── */
 .preview-col{display:flex;flex-direction:column;overflow:hidden;min-height:0;}
-.preview-bar{height:44px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 18px;background:var(--panel);border-bottom:1px solid var(--border);gap:8px;}
+.preview-bar{
+  height:52px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 18px;
+  background:var(--panel);
+  border-bottom:1px solid var(--border);
+  gap:8px;
+}
 .bar-label{font-size:.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
-.bar-actions{display:flex;gap:6px;}
-.ibtn{background:var(--panel2);border:1.5px solid var(--border);border-radius:6px;padding:5px 11px;font-size:.65rem;font-weight:600;font-family:inherit;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .15s;}
-.ibtn:hover{border-color:var(--accent);color:var(--accent);}
+.bar-actions{display:flex;gap:8px;align-items:center;}
+
+.ibtn{
+  position:relative;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:8px 16px;
+  font-size:.62rem;font-weight:700;letter-spacing:.9px;text-transform:uppercase;
+  font-family:inherit;
+  border-radius:9px;
+  cursor:pointer;
+  transition:all .2s cubic-bezier(.4,0,.2,1);
+  white-space:nowrap;
+  overflow:hidden;
+  outline:none;
+}
+.ibtn::after{content:'';position:absolute;inset:0;opacity:0;transition:opacity .15s;border-radius:inherit;background:rgba(255,255,255,.12);}
+.ibtn:hover::after{opacity:1;}
+.ibtn:active{transform:scale(.95);}
+.ibtn-secondary{background:transparent;border:1.5px solid var(--border2);color:var(--muted);}
+.ibtn-secondary:hover{border-color:var(--accent);color:var(--accent);background:rgba(217,59,62,.06);box-shadow:0 2px 12px rgba(217,59,62,.15);}
+.ibtn-primary{background:linear-gradient(135deg,#b51217 0%,#d93b3e 100%);border:1.5px solid rgba(255,255,255,.15);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.3),inset 0 1px 0 rgba(217,59,62,.35);}
+.ibtn-primary:hover{background:linear-gradient(135deg,#d93b3e 0%,#ff4d4f 100%);box-shadow:0 0 0 1px rgba(217,59,62,.35),0 6px 20px rgba(217,59,62,.45);color:#fff;}
+.ibtn-icon{display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 
 .preview-canvas{flex:1;min-height:0;position:relative;overflow:hidden;background-size:cover;background-position:center;cursor:default;}
 .canvas-overlay{position:absolute;inset:0;background:rgba(0,0,0,.38);pointer-events:none;z-index:1;transition:background .3s;}
 
-/* Perspective container — wraps signWrapper for 3D transforms */
-#perspectiveWrap{
-  position:absolute;
-  inset:0;
-  perspective:900px;
-  perspective-origin:50% 50%;
+/* ─── posWrapper: solo traslación. signWrapper: rotación+tilt+handles ─── */
+#posWrapper{
+  position:absolute;z-index:10;top:50%;left:50%;
+  /* solo translate, sin rotation */
   pointer-events:none;
-  z-index:10;
 }
 #signWrapper{
-  position:absolute;
-  z-index:10;
-  top:50%;left:50%;
-  transform:translate(-50%,-50%);
+  position:relative;
   transform-origin:center center;
-  transform-style:preserve-3d;
   cursor:grab;user-select:none;touch-action:none;
   overflow:visible;
-  width:max-content;
   pointer-events:auto;
+  display:inline-block;
 }
 #signWrapper:active{cursor:grabbing;}
 
-#mountPlate{position:absolute;pointer-events:none;opacity:0;}
-#mountHook{position:absolute;left:50%;transform:translateX(-50%);pointer-events:none;display:none;z-index:-1;}
-#mountBase{position:absolute;left:50%;bottom:-30px;transform:translateX(-50%);pointer-events:none;display:none;z-index:-1;}
-#mountScrews{position:absolute;inset:-6px -8px;pointer-events:none;display:none;}
+/* ─── signContent aplica solo tilt (rotateY) — rotate va en signWrapper ─── */
+#signContent{
+  position:relative;
+  transform-style:preserve-3d;
+  transform-origin:center center;
+  display:inline-block;
+}
+
+#mountPlate{position:absolute;pointer-events:none;opacity:0;z-index:0;}
+#mountHook{position:absolute;left:50%;transform:translateX(-50%);pointer-events:none;display:none;z-index:1;}
+#mountBase{position:absolute;left:50%;bottom:-30px;transform:translateX(-50%);pointer-events:none;display:none;z-index:1;}
+#mountScrews{position:absolute;inset:-6px -8px;pointer-events:none;display:none;z-index:30;}
 .screw{position:absolute;width:9px;height:9px;border-radius:50%;background:#aaa;border:2px solid #777;box-shadow:inset 0 1px 2px rgba(255,255,255,.5),0 1px 3px rgba(0,0,0,.4);}
 .screw::after{content:'';position:absolute;inset:1px;background:linear-gradient(135deg,#999 40%,#666);border-radius:50%;}
 
 #acrylicCanvas{
-  position:absolute;
-  z-index:1;
-  pointer-events:none;
-  opacity:0;
-  transition:opacity .3s;
+  position:absolute;z-index:2;pointer-events:none;opacity:0;transition:opacity .3s;
   filter:drop-shadow(0 0 12px rgba(255,255,255,.25));
 }
 
-/* neonText: display inline-block + nowrap → el ancho lo dicta el texto,
-   nunca el contenedor padre. El wrapper escala todo uniformemente. */
 #neonText{
-  display:inline-block;
-  text-align:center;
-  line-height:1.2;
-  white-space:pre;
-  padding:16px 28px;
-  pointer-events:auto;
-  position:relative;
-  z-index:2;
-  transition:color .2s,text-shadow .2s;
-  paint-order:stroke fill;
+  display:inline-block;text-align:center;line-height:1.2;white-space:pre;padding:16px 28px;
+  pointer-events:auto;position:relative;z-index:3;transition:color .2s,text-shadow .2s;paint-order:stroke fill;
 }
 
-#resizeHandle{position:absolute;bottom:-8px;right:-8px;width:22px;height:22px;background:rgba(20,20,30,.85);border-radius:50%;cursor:se-resize;border:2px solid rgba(255,255,255,.55);box-shadow:0 2px 8px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:20;transition:background .15s,transform .15s;}
-#resizeHandle:hover{background:rgba(217,59,62,.9);border-color:#fff;transform:scale(1.15);}
-#resizeHandle svg{width:10px;height:10px;}
+/* ─── Resize handle ─── */
+#resizeHandle{
+  position:absolute;bottom:-11px;right:-11px;
+  width:26px;height:26px;
+  background:rgba(15,14,13,.92);
+  border-radius:50%;cursor:se-resize;
+  border:2px solid rgba(255,255,255,.7);
+  box-shadow:0 2px 10px rgba(0,0,0,.65),0 0 0 1px rgba(0,0,0,.2);
+  display:flex;align-items:center;justify-content:center;
+  z-index:50;
+  pointer-events:auto !important;
+  touch-action:none;
+  transition:background .15s,transform .15s,box-shadow .15s;
+}
+#resizeHandle:hover{background:rgba(217,59,62,.95);border-color:#fff;transform:scale(1.22);box-shadow:0 0 16px rgba(217,59,62,.55),0 2px 8px rgba(0,0,0,.5);}
+#resizeHandle svg{width:11px;height:11px;pointer-events:none;}
 
 #sizeHint{
-  position:absolute;
-  bottom:-34px;
-  right:-8px;
-  background:rgba(0,0,0,.78);
-  color:#fff;
-  font-size:.55rem;
-  font-weight:700;
-  letter-spacing:.4px;
-  padding:3px 8px 3px 7px;
-  border-radius:5px;
-  white-space:nowrap;
-  pointer-events:none;
-  opacity:0;
-  transition:opacity .35s;
-  transform-origin:top right;
+  position:absolute;bottom:-34px;right:-8px;background:rgba(0,0,0,.78);color:#fff;
+  font-size:.55rem;font-weight:700;letter-spacing:.4px;padding:3px 8px 3px 7px;border-radius:5px;
+  white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .35s;transform-origin:top right;
+  z-index:50;
 }
-/* Flecha apuntando arriba-derecha hacia el resizeHandle */
-#sizeHint::before{
-  content:'';
-  position:absolute;
-  bottom:100%;
-  right:10px;
-  border:5px solid transparent;
-  border-bottom-color:rgba(0,0,0,.78);
-}
+#sizeHint::before{content:'';position:absolute;bottom:100%;right:10px;border:5px solid transparent;border-bottom-color:rgba(0,0,0,.78);}
 
-.dim-badge{position:absolute;bottom:12px;right:14px;z-index:3;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.14);border-radius:5px;padding:4px 10px;font-size:.63rem;font-weight:600;color:rgba(255,255,255,.65);backdrop-filter:blur(5px);letter-spacing:.3px;}
-.scroll-hint{position:absolute;bottom:12px;left:14px;z-index:3;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.1);border-radius:5px;padding:4px 9px;font-size:.58rem;color:rgba(255,255,255,.5);backdrop-filter:blur(4px);pointer-events:none;}
+.dim-badge{position:absolute;bottom:12px;right:14px;z-index:100;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.14);border-radius:5px;padding:4px 10px;font-size:.63rem;font-weight:600;color:rgba(255,255,255,.65);letter-spacing:.3px;}
+.scroll-hint{position:absolute;bottom:12px;left:14px;z-index:100;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.1);border-radius:5px;padding:4px 9px;font-size:.58rem;color:rgba(255,255,255,.5);pointer-events:none;}
 
 @keyframes flicker{0%,93%,100%{opacity:1;}94%{opacity:.7;}95%{opacity:1;}97%{opacity:.42;}98%{opacity:1;}}
 .flicker{animation:flicker 5s infinite;}
@@ -176,18 +185,20 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
 
 #rainCanvas{position:absolute;inset:0;pointer-events:none;z-index:5;display:none;}
 
-/* ═══════ RESPONSIVE ═══════ */
-@media (max-width:768px){
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:768px){
   html,body{overflow:hidden;height:100%;}
   header{padding:0 14px;height:46px;}
   .logo{font-size:.75rem;letter-spacing:2px;}
   .header-mid{display:none;}
   .layout{grid-template-columns:1fr;grid-template-rows:1fr auto;overflow:hidden;}
   .preview-col{grid-row:1;min-height:0;position:relative;}
-  .preview-bar{height:38px;padding:0 10px;}
+  .preview-bar{height:48px;padding:0 10px;gap:6px;}
   .bar-label{display:none;}
-  .ibtn{padding:4px 8px;font-size:.6rem;}
-  .ibtn .btn-text{display:none;}
+  .ibtn{padding:7px 12px;font-size:.58rem;gap:4px;}
+  .btn-text{display:none;}
+  .ibtn-icon svg{width:16px;height:16px;}
+  .ibtn-primary,.ibtn-secondary{min-width:42px;}
   .sidebar{grid-row:2;border-right:none;border-top:1px solid var(--border);overflow:hidden;display:flex;flex-direction:column;height:var(--sheet-h,52px);transition:height .35s cubic-bezier(.4,0,.2,1);position:relative;background:var(--panel);z-index:50;}
   .sheet-handle{display:flex;flex-direction:column;align-items:center;padding:8px 0 4px;cursor:pointer;flex-shrink:0;gap:2px;}
   .sheet-pill{width:36px;height:4px;border-radius:2px;background:var(--border2);}
@@ -201,281 +212,85 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(217,59,62,.0
   .font-grid{grid-template-columns:repeat(3,1fr);}
   .wall-grid{grid-template-columns:repeat(4,1fr);}
   .color-grid{grid-template-columns:repeat(6,1fr);}
-  #resizeHandle{width:28px;height:28px;bottom:-10px;right:-10px;}
-  #sizeHint{font-size:.52rem;}
+  #resizeHandle{width:30px;height:30px;bottom:-12px;right:-12px;}
 }
-@media (max-width:380px){
+@media(max-width:380px){
   .font-grid{grid-template-columns:1fr 1fr;}
   .wall-grid{grid-template-columns:repeat(3,1fr);}
 }
 
-/* ═══ CHAR EDIT ═══ */
-.nchar{
-  display:inline;
-  cursor:pointer;
-  position:relative;
-  transition:text-shadow .15s;
-}
-.nchar.selected{
-  outline:2px solid rgba(255,255,255,.5);
-  outline-offset:3px;
-  border-radius:3px;
-}
-.nchar-nl{ display:block; height:0; }
+/* ─── Char editor ─── */
+.nchar{display:inline;cursor:pointer;position:relative;transition:text-shadow .15s;}
+.nchar.selected{outline:2px solid rgba(255,255,255,.5);outline-offset:3px;border-radius:3px;}
+.nchar-nl{display:block;height:0;}
 
 #charMenu{
-  position:absolute;
-  z-index:100;
-  background:rgba(12,13,18,.95);
-  border:1px solid rgba(255,255,255,.12);
-  border-radius:10px;
-  padding:8px 10px;
-  box-shadow:0 8px 28px rgba(0,0,0,.75);
-  backdrop-filter:blur(14px);
-  pointer-events:auto;
-  display:none;
-  white-space:nowrap;
+  position:absolute;z-index:200;background:rgba(12,13,18,.95);border:1px solid rgba(255,255,255,.12);
+  border-radius:10px;padding:8px 10px;box-shadow:0 8px 28px rgba(0,0,0,.75);
+  pointer-events:auto;display:none;white-space:nowrap;
 }
-#charMenu.visible{ display:flex; align-items:center; gap:8px; }
-#charMenu::after{
-  content:'';
-  position:absolute;
-  top:100%; left:50%;
-  transform:translateX(-50%);
-  border:6px solid transparent;
-  border-top-color:rgba(12,13,18,.95);
-}
+#charMenu.visible{display:flex;align-items:center;gap:8px;}
+#charMenu::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:rgba(12,13,18,.95);}
+.cmenu-carousel{display:flex;align-items:center;gap:4px;}
+.cmenu-arr{background:none;border:none;color:rgba(255,255,255,.5);font-size:1rem;cursor:pointer;padding:0 2px;line-height:1;transition:color .12s;flex-shrink:0;}
+.cmenu-arr:hover{color:#fff;}
+.cmenu-font-name{font-size:.82rem;color:#fff;min-width:80px;text-align:center;padding:4px 8px;background:rgba(255,255,255,.08);border-radius:6px;border:1px solid rgba(255,255,255,.12);cursor:default;}
+.cmenu-sep{width:1px;height:24px;background:rgba(255,255,255,.12);flex-shrink:0;}
+.cmenu-color-wrap{position:relative;}
+.cmenu-color-btn{width:22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,.5);cursor:pointer;transition:transform .12s;flex-shrink:0;display:block;}
+.cmenu-color-btn:hover{transform:scale(1.15);}
+.cmenu-color-sub{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);background:rgba(12,13,18,.97);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:8px;display:none;flex-wrap:wrap;gap:6px;width:154px;box-shadow:0 6px 24px rgba(0,0,0,.8);}
+.cmenu-color-sub.open{display:flex;}
+.cmenu-color-sub::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:rgba(12,13,18,.97);}
+.cmenu-csw{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .12s;flex-shrink:0;}
+.cmenu-csw:hover{transform:scale(1.18);}
+.cmenu-csw.on{border-color:#fff;transform:scale(1.1);}
+.cmenu-reset{background:none;border:none;color:rgba(255,255,255,.35);font-size:.85rem;cursor:pointer;padding:0 2px;transition:color .12s;line-height:1;flex-shrink:0;}
+.cmenu-reset:hover{color:rgba(255,100,100,.8);}
 
-/* Carrusel de fuentes */
-.cmenu-carousel{
-  display:flex;
-  align-items:center;
-  gap:4px;
-}
-.cmenu-arr{
-  background:none;
-  border:none;
-  color:rgba(255,255,255,.5);
-  font-size:1rem;
-  cursor:pointer;
-  padding:0 2px;
-  line-height:1;
-  transition:color .12s;
-  flex-shrink:0;
-}
-.cmenu-arr:hover{ color:#fff; }
-.cmenu-font-name{
-  font-size:.82rem;
-  color:#fff;
-  min-width:80px;
-  text-align:center;
-  padding:4px 8px;
-  background:rgba(255,255,255,.08);
-  border-radius:6px;
-  border:1px solid rgba(255,255,255,.12);
-  cursor:default;
-}
-
-/* Separador */
-.cmenu-sep{
-  width:1px;
-  height:24px;
-  background:rgba(255,255,255,.12);
-  flex-shrink:0;
-}
-
-/* Swatch de color activo + submenu */
-.cmenu-color-wrap{
-  position:relative;
-}
-.cmenu-color-btn{
-  width:22px; height:22px;
-  border-radius:50%;
-  border:2px solid rgba(255,255,255,.5);
-  cursor:pointer;
-  transition:transform .12s;
-  flex-shrink:0;
-  display:block;
-}
-.cmenu-color-btn:hover{ transform:scale(1.15); }
-.cmenu-color-sub{
-  position:absolute;
-  bottom:calc(100% + 10px);
-  left:50%;
-  transform:translateX(-50%);
-  background:rgba(12,13,18,.97);
-  border:1px solid rgba(255,255,255,.12);
-  border-radius:10px;
-  padding:8px;
-  display:none;
-  flex-wrap:wrap;
-  gap:6px;
-  width:154px;
-  box-shadow:0 6px 24px rgba(0,0,0,.8);
-}
-.cmenu-color-sub.open{ display:flex; }
-.cmenu-color-sub::after{
-  content:'';
-  position:absolute;
-  top:100%; left:50%;
-  transform:translateX(-50%);
-  border:6px solid transparent;
-  border-top-color:rgba(12,13,18,.97);
-}
-.cmenu-csw{
-  width:20px; height:20px;
-  border-radius:50%;
-  cursor:pointer;
-  border:2px solid transparent;
-  transition:all .12s;
-  flex-shrink:0;
-}
-.cmenu-csw:hover{ transform:scale(1.18); }
-.cmenu-csw.on{ border-color:#fff; transform:scale(1.1); }
-
-/* Reset */
-.cmenu-reset{
-  background:none;
-  border:none;
-  color:rgba(255,255,255,.35);
-  font-size:.85rem;
-  cursor:pointer;
-  padding:0 2px;
-  transition:color .12s;
-  line-height:1;
-  flex-shrink:0;
-}
-.cmenu-reset:hover{ color:rgba(255,100,100,.8); }
-
-/* ═══ ROTATE HANDLE ═══ */
+/* ─── Handles y badges: siempre al frente ─── */
 #rotateHandle{
-  position:absolute;
-  top:-38px;
-  left:50%;
-  transform:translateX(-50%);
-  width:24px; height:24px;
-  background:rgba(20,20,30,.85);
-  border:2px solid rgba(255,255,255,.55);
-  border-radius:50%;
-  cursor:grab;
-  z-index:20;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  box-shadow:0 2px 8px rgba(0,0,0,.5);
-  transition:background .15s, transform .15s;
-  pointer-events:auto;
+  position:absolute;top:-38px;left:50%;transform:translateX(-50%);
+  width:24px;height:24px;background:rgba(20,20,30,.85);border:2px solid rgba(255,255,255,.55);
+  border-radius:50%;cursor:grab;z-index:50;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.5);transition:background .15s,transform .15s;pointer-events:auto;
 }
-#rotateHandle:hover{
-  background:rgba(217,59,62,.9);
-  border-color:#fff;
-  transform:translateX(-50%) scale(1.15);
-}
-#rotateHandle.active{
-  cursor:grabbing;
-  background:rgba(217,59,62,.9);
-}
-/* Línea conectora del handle al wrapper */
-#rotateHandle::after{
-  content:'';
-  position:absolute;
-  top:100%; left:50%;
-  transform:translateX(-50%);
-  width:1px; height:10px;
-  background:rgba(255,255,255,.3);
-}
-#rotateHandle svg{ width:12px; height:12px; pointer-events:none; }
+#rotateHandle:hover{background:rgba(217,59,62,.9);border-color:#fff;transform:translateX(-50%) scale(1.15);}
+#rotateHandle.active{cursor:grabbing;background:rgba(217,59,62,.9);}
+#rotateHandle::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);width:1px;height:10px;background:rgba(255,255,255,.3);}
+#rotateHandle svg{width:12px;height:12px;pointer-events:none;}
 
-/* Badge de ángulo */
 #angleBadge{
-  position:absolute;
-  top:-68px;
-  left:50%;
-  transform:translateX(-50%);
-  background:rgba(0,0,0,.75);
-  color:#fff;
-  font-size:.55rem;
-  font-weight:700;
-  letter-spacing:.5px;
-  padding:3px 7px;
-  border-radius:4px;
-  white-space:nowrap;
-  pointer-events:none;
-  opacity:0;
-  transition:opacity .15s;
+  position:absolute;top:-68px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.75);color:#fff;font-size:.55rem;font-weight:700;letter-spacing:.5px;
+  padding:3px 7px;border-radius:4px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;
+  z-index:51;
 }
-#angleBadge.visible{ opacity:1; }
+#angleBadge.visible{opacity:1;}
 
-/* ═══ TILT HANDLES (3D) ═══ */
+/* ─── Tilt handles ─── */
 .tiltHandle{
-  position:absolute;
-  top:50%;
-  width:20px; height:20px;
-  transform:translateY(-50%);
-  background:rgba(20,20,30,.85);
-  border:2px solid rgba(255,255,255,.45);
-  border-radius:50%;
-  cursor:ns-resize;
-  z-index:20;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  box-shadow:0 2px 8px rgba(0,0,0,.5);
-  transition:background .15s;
-  pointer-events:auto;
+  position:absolute;top:50%;width:20px;height:20px;transform:translateY(-50%);
+  background:rgba(20,20,30,.85);border:2px solid rgba(255,255,255,.45);border-radius:50%;
+  cursor:ns-resize;z-index:50;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.5);transition:background .15s;pointer-events:auto;
 }
-.tiltHandle:hover{ background:rgba(217,59,62,.9); border-color:#fff; }
-.tiltHandle.active{ background:rgba(217,59,62,.9); cursor:grabbing; }
-.tiltHandle svg{ width:10px; height:10px; pointer-events:none; }
-#tiltHandleY{ right:-30px; cursor:ew-resize; }  /* eje Y — lado derecho, drag horizontal */
+.tiltHandle:hover{background:rgba(217,59,62,.9);border-color:#fff;}
+.tiltHandle.active{background:rgba(217,59,62,.9);cursor:grabbing;}
+.tiltHandle svg{width:10px;height:10px;pointer-events:none;}
+#tiltHandleY{right:-30px;cursor:ew-resize;}
 
-/* Badge compartido para tilt */
 #tiltBadge{
-  position:absolute;
-  top:-68px;
-  left:50%;
-  transform:translateX(-50%);
-  background:rgba(0,0,0,.75);
-  color:#fff;
-  font-size:.55rem;
-  font-weight:700;
-  letter-spacing:.4px;
-  padding:3px 7px;
-  border-radius:4px;
-  white-space:nowrap;
-  pointer-events:none;
-  opacity:0;
-  transition:opacity .15s;
+  position:absolute;top:-68px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.75);color:#fff;font-size:.55rem;font-weight:700;letter-spacing:.4px;
+  padding:3px 7px;border-radius:4px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;
+  z-index:51;
 }
-#tiltBadge.visible{ opacity:1; }
+#tiltBadge.visible{opacity:1;}
 
-body.preview-mode header,
-body.preview-mode .sidebar,
-body.preview-mode .preview-bar {
-  display: none !important;
-}
-
-body.preview-mode .sidebar {
-  visibility: hidden;
-  pointer-events: none;
-}
-
-body.preview-mode .preview-col {
-  position: fixed;
-  inset: 0;
-  z-index: 999;
-  background: #000;
-  padding: 0 !important;
-  margin: 0 !important;
-}
-
-body.preview-mode .preview-canvas {
-  width: 100% !important;
-  height: 100% !important;
-  aspect-ratio: auto !important;
-  max-width: none !important;
-  max-height: none !important;
-}
+body.preview-mode header,body.preview-mode .sidebar,body.preview-mode .preview-bar{display:none!important;}
+body.preview-mode .preview-col{position:fixed;inset:0;z-index:999;background:#000;padding:0!important;margin:0!important;}
+body.preview-mode .preview-canvas{width:100%!important;height:100%!important;aspect-ratio:auto!important;max-width:none!important;max-height:none!important;}
 </style>
 </head>
 <body>
@@ -505,16 +320,24 @@ body.preview-mode .preview-canvas {
   <div class="block" data-tab="Fuente" data-idx="1">
     <div class="bhead"><span class="num">2</span><span class="blabel">Tipografía</span></div>
     <div class="font-grid" id="fontGrid">
-      <div class="fbtn on"  data-font="Pacifico"       style="font-family:'Pacifico'">Pacifico</div>
-      <div class="fbtn"     data-font="Courgette"      style="font-family:'Courgette'">Courgette</div>
-      <div class="fbtn"     data-font="Yellowtail"     style="font-family:'Yellowtail'">Yellowtail</div>
-      <div class="fbtn"     data-font="Cookie"         style="font-family:'Cookie';font-size:1.1rem">Cookie</div>
-      <div class="fbtn"     data-font="Kaushan Script" style="font-family:'Kaushan Script'">Kaushan</div>
-      <div class="fbtn"     data-font="Comfortaa"      style="font-family:'Comfortaa';font-weight:300">Comfortaa</div>
-      <div class="fbtn"     data-font="Nunito"         style="font-family:'Nunito';font-weight:300">Nunito</div>
-      <div class="fbtn"     data-font="Raleway"        style="font-family:'Raleway';font-weight:300;letter-spacing:2px;font-size:.8rem">Raleway</div>
-      <div class="fbtn"     data-font="Righteous"      style="font-family:'Righteous'">Righteous</div>
-      <div class="fbtn"     data-font="Orbitron"       style="font-family:'Orbitron';font-size:.68rem">Orbitron</div>
+      <div class="fbtn on" data-font="Pacifico"        style="font-family:'Pacifico'">Pacifico</div>
+      <div class="fbtn"    data-font="Courgette"        style="font-family:'Courgette'">Courgette</div>
+      <div class="fbtn"    data-font="Yellowtail"       style="font-family:'Yellowtail'">Yellowtail</div>
+      <div class="fbtn"    data-font="Cookie"           style="font-family:'Cookie';font-size:1.1rem">Cookie</div>
+      <div class="fbtn"    data-font="Kaushan Script"   style="font-family:'Kaushan Script'">Kaushan</div>
+      <div class="fbtn"    data-font="Dancing Script"   style="font-family:'Dancing Script'">Dancing</div>
+      <div class="fbtn"    data-font="Great Vibes"      style="font-family:'Great Vibes';font-size:1.05rem">Great Vibes</div>
+      <div class="fbtn"    data-font="Sacramento"       style="font-family:'Sacramento';font-size:1.05rem">Sacramento</div>
+      <div class="fbtn"    data-font="Lobster"          style="font-family:'Lobster'">Lobster</div>
+      <div class="fbtn"    data-font="Satisfy"          style="font-family:'Satisfy'">Satisfy</div>
+      <div class="fbtn"    data-font="Caveat"           style="font-family:'Caveat';font-weight:700">Caveat</div>
+      <div class="fbtn"    data-font="Rock Salt"        style="font-family:'Rock Salt';font-size:.56rem">Rock Salt</div>
+      <div class="fbtn"    data-font="Amatic SC"        style="font-family:'Amatic SC';font-weight:700;letter-spacing:1px">Amatic SC</div>
+      <div class="fbtn"    data-font="Comfortaa"        style="font-family:'Comfortaa';font-weight:300">Comfortaa</div>
+      <div class="fbtn"    data-font="Nunito"           style="font-family:'Nunito';font-weight:300">Nunito</div>
+      <div class="fbtn"    data-font="Raleway"          style="font-family:'Raleway';font-weight:300;letter-spacing:2px;font-size:.8rem">Raleway</div>
+      <div class="fbtn"    data-font="Righteous"        style="font-family:'Righteous'">Righteous</div>
+      <div class="fbtn"    data-font="Orbitron"         style="font-family:'Orbitron';font-size:.62rem">Orbitron</div>
     </div>
   </div>
 
@@ -580,7 +403,6 @@ body.preview-mode .preview-canvas {
         <div><div class="tname">Control de Brillo</div><div class="tdesc">Simula intensidad baja — dimmer físico incluido</div></div>
         <label class="toggle"><input type="checkbox" id="tDimmer"><span class="tslider"></span></label>
       </div>
-
       <div class="trow" style="padding-top:10px;border-top:1px solid var(--border);margin-top:2px;">
         <div><div class="tname" style="font-size:.85rem;">💡 Neón Encendido</div><div class="tdesc">Apaga para ver el letrero sin luz</div></div>
         <label class="toggle"><input type="checkbox" id="tPower" checked><span class="tslider"></span></label>
@@ -594,15 +416,34 @@ body.preview-mode .preview-canvas {
   <div class="preview-bar">
     <div class="bar-label">Vista previa · Arrastra y redimensiona el letrero</div>
     <div class="bar-actions">
-      <button class="ibtn" onclick="resetPosition()">⊙ <span class="btn-text">Centrar</span></button>
-      <button class="ibtn" id="btnPreview">👁 <span class="btn-text">Preview</span></button>
+      <button class="ibtn ibtn-secondary" onclick="resetPosition()">
+        <span class="ibtn-icon">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="8" cy="8" r="2.5"/>
+            <line x1="8" y1="1" x2="8" y2="4"/>
+            <line x1="8" y1="12" x2="8" y2="15"/>
+            <line x1="1" y1="8" x2="4" y2="8"/>
+            <line x1="12" y1="8" x2="15" y2="8"/>
+          </svg>
+        </span>
+        <span class="btn-text">Centrar</span>
+      </button>
+      <button class="ibtn ibtn-primary" id="btnPreview">
+        <span class="ibtn-icon">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 8 C3 3, 13 3, 15 8 C13 13, 3 13, 1 8Z"/>
+            <circle cx="8" cy="8" r="2.5" fill="currentColor"/>
+          </svg>
+        </span>
+        <span class="btn-text">Preview</span>
+      </button>
     </div>
   </div>
   <div class="preview-canvas" id="previewCanvas"
     style="background-image:url('https://images.unsplash.com/photo-1770816306935-d0a08e93d823?w=1400&q=85')">
     <div class="canvas-overlay" id="canvasOverlay"></div>
     <canvas id="rainCanvas"></canvas>
-    <div id="perspectiveWrap">
+    <div id="posWrapper">
     <div id="signWrapper">
       <div id="angleBadge">0°</div>
       <div id="rotateHandle">
@@ -620,34 +461,35 @@ body.preview-mode .preview-canvas {
           <polyline points="7,2 9,5 7,8"/>
         </svg>
       </div>
-      <div id="mountPlate"></div>
       <div id="mountHook"></div>
+      <div id="signContent">
+        <!-- mountPlate dentro de signContent: se posiciona relativo al neonEl con coords reales -->
+        <div id="mountPlate"></div>
+        <canvas id="acrylicCanvas"></canvas>
+        <div id="neonText" style="font-family:'Pacifico'">Hello World</div>
+      </div>
       <div id="mountBase"></div>
       <div id="mountScrews"></div>
-      <canvas id="acrylicCanvas"></canvas>
-      <div id="neonText" style="font-family:'Pacifico'">Hello World</div>
-      <div id="charMenu">
-  <!-- Carrusel fuente -->
-  <div class="cmenu-carousel">
-    <button class="cmenu-arr" id="cmenuPrev">‹</button>
-    <div class="cmenu-font-name" id="cmenuFontName">Pacifico</div>
-    <button class="cmenu-arr" id="cmenuNext">›</button>
-  </div>
-  <div class="cmenu-sep"></div>
-  <!-- Color -->
-  <div class="cmenu-color-wrap">
-    <div class="cmenu-color-btn" id="cmenuColorBtn"></div>
-    <div class="cmenu-color-sub" id="cmenuColorSub"></div>
-  </div>
-  <div class="cmenu-sep"></div>
-  <!-- Reset -->
-  <button class="cmenu-reset" id="cmenuReset" title="Restablecer">↺</button>
-</div>
-<div id="resizeHandle">
-        <svg viewBox="0 0 10 10"><line x1="2" y1="8" x2="8" y2="2" stroke="white" stroke-width="1.5" stroke-linecap="round"/><line x1="5" y1="8" x2="8" y2="5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <div id="resizeHandle">
+        <svg viewBox="0 0 10 10"><line x1="2" y1="8" x2="8" y2="2" stroke="white" stroke-width="1.8" stroke-linecap="round"/><line x1="5" y1="8" x2="8" y2="5" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
       </div>
     </div>
-    </div><!-- /perspectiveWrap -->
+    </div>
+    <!-- charMenu fuera del signWrapper: se posiciona con coords de pantalla → no se mueve con el letrero -->
+    <div id="charMenu">
+      <div class="cmenu-carousel">
+        <button class="cmenu-arr" id="cmenuPrev">‹</button>
+        <div class="cmenu-font-name" id="cmenuFontName">Pacifico</div>
+        <button class="cmenu-arr" id="cmenuNext">›</button>
+      </div>
+      <div class="cmenu-sep"></div>
+      <div class="cmenu-color-wrap">
+        <div class="cmenu-color-btn" id="cmenuColorBtn"></div>
+        <div class="cmenu-color-sub" id="cmenuColorSub"></div>
+      </div>
+      <div class="cmenu-sep"></div>
+      <button class="cmenu-reset" id="cmenuReset" title="Restablecer">↺</button>
+    </div>
     <div class="dim-badge" id="dimBadge">~ 60 × 20 cm</div>
     <div class="scroll-hint" id="scrollHint">🖱 Rueda del ratón = redimensionar</div>
   </div>
@@ -655,22 +497,19 @@ body.preview-mode .preview-canvas {
 </div>
 
 <script>
-// ════════════════════════════════════════
-// STATE
-// ════════════════════════════════════════
 const S = {
   text:'Hello World', font:'Pacifico', color:'#b3f0ff',
   scale:1, posX:0, posY:0, rotation:0, tiltY:0, bgX:50, bgY:50,
   mount:'libre',
   backing:false, rgb:false, flicker:false, dimmer:false, power:true,
-  charOverrides:{},  // idx → {font, color}
+  charOverrides:{},
 };
 
-// ════════════════════════════════════════
-// DOM REFS
-// ════════════════════════════════════════
 const neonEl        = document.getElementById('neonText');
+const posWrapper    = document.getElementById('posWrapper');
 const signWrapper   = document.getElementById('signWrapper');
+const signContent   = document.getElementById('signContent');
+const charMenu      = document.getElementById('charMenu');
 const previewCanvas = document.getElementById('previewCanvas');
 const overlay       = document.getElementById('canvasOverlay');
 const mountPlate    = document.getElementById('mountPlate');
@@ -682,606 +521,344 @@ const rainCtx       = rainCvs.getContext('2d');
 const acrylicCvs    = document.getElementById('acrylicCanvas');
 const acrylicCtx    = acrylicCvs.getContext('2d');
 
-// ════════════════════════════════════════
-// FONT-SIZE DINÁMICO
-// ════════════════════════════════════════
-function calcBaseFontSize() {
-  const cw = previewCanvas.offsetWidth  || 800;
-  const ch = previewCanvas.offsetHeight || 400;
-
-  const lines  = (S.text || 'A').split('\n');
-  const maxLen = Math.max(...lines.map(l => l.length), 1);
-
-  const fsFromW = (cw * 0.78) / (maxLen * 0.58);
-  const fsFromH = (ch * 0.65) / (lines.length * 1.2);
-
-  const fsCeil = cw < 600 ? 48 : 72;
-
-  return Math.max(14, Math.min(fsCeil, fsFromW, fsFromH));
+// ── BASE font-size (sin scale) ──
+// Esta es la fuente base que escalamos multiplicando directamente por S.scale
+function calcBaseFontSize(){
+  const cw=previewCanvas.offsetWidth||800, ch=previewCanvas.offsetHeight||400;
+  const lines=(S.text||'A').split('\n'), maxLen=Math.max(...lines.map(l=>l.length),1);
+  const fsFromW=(cw*.78)/(maxLen*.58), fsFromH=(ch*.65)/(lines.length*1.2);
+  const fsCeil=cw<600?48:72;
+  return Math.max(14,Math.min(fsCeil,fsFromW,fsFromH));
 }
+let baseFontSize=72; // tamaño base sin scale
+function recalcFontSize(){ baseFontSize=calcBaseFontSize(); renderNeon(); }
 
-let currentFS = 72;
+// currentFS = baseFontSize * scale — esto se aplica directamente al DOM
+// Así offsetWidth/offsetHeight reflejan el tamaño visual real
+function getCurrentFS(){ return baseFontSize * S.scale; }
 
-function recalcFontSize(){
-  currentFS = calcBaseFontSize();
-  renderNeon();
-}
-
-// ════════════════════════════════════════
-// RGB
-// ════════════════════════════════════════
-const RGB_COLORS = ['#ff3cac','#00f5ff','#00ff88','#ffee00','#ff8800','#bf00ff','#3b82f6'];
-let rgbInt = null, ri = 0, currentRGBColor = RGB_COLORS[0];
-
+// ── RGB ──
+const RGB_COLORS=['#ff3cac','#00f5ff','#00ff88','#ffee00','#ff8800','#bf00ff','#3b82f6'];
+let rgbInt=null, ri=0, currentRGBColor=RGB_COLORS[0];
 function startRGB(){
-  rgbInt = setInterval(()=>{
-    currentRGBColor = RGB_COLORS[ri++ % RGB_COLORS.length];
-    neonEl.style.color = currentRGBColor;
-    neonEl.style.textShadow = tubeShadow(currentRGBColor);
-    neonEl.style.webkitTextStroke = tubeStroke(currentRGBColor);
+  rgbInt=setInterval(()=>{
+    currentRGBColor=RGB_COLORS[ri++%RGB_COLORS.length];
+    neonEl.style.color=currentRGBColor;
+    neonEl.style.textShadow=tubeShadow(currentRGBColor);
+    neonEl.style.webkitTextStroke=tubeStroke(currentRGBColor);
     if(S.backing) drawAcrylic();
-  }, 700);
+  },700);
 }
-function stopRGB(){ clearInterval(rgbInt); currentRGBColor = RGB_COLORS[0]; renderNeon(); }
+function stopRGB(){ clearInterval(rgbInt); currentRGBColor=RGB_COLORS[0]; renderNeon(); }
 
-// ════════════════════════════════════════
-// ACRYLIC
-// ════════════════════════════════════════
-let acrylicRaf = null;
-
+// ── Acrylic ──
+// acrylicCanvas está dentro de signContent (que tiene rotación/tilt).
+// Para que se mueva CON el letrero pero sin distorsionarse con la rotación,
+// lo posicionamos usando getBoundingClientRect del neonEl convertido al espacio de signWrapper.
+let acrylicRaf=null;
 function drawAcrylic(){
   if(!S.backing){ acrylicCvs.style.opacity='0'; return; }
   cancelAnimationFrame(acrylicRaf);
-  acrylicRaf = requestAnimationFrame(()=> requestAnimationFrame(()=> _renderAcrylic()));
+  acrylicRaf=requestAnimationFrame(()=>requestAnimationFrame(()=>_renderAcrylic()));
 }
-
 function _renderAcrylic(){
-  const PAD = 44;
-  const nW = neonEl.offsetWidth;
-  const nH = neonEl.offsetHeight;
-  const nL = neonEl.offsetLeft;
-  const nT = neonEl.offsetTop;
-  const cvW = nW + PAD * 2;
-  const cvH = nH + PAD * 2;
+  const PAD=26;
+  // Usamos offsetWidth/offsetHeight del neonEl (reales, sin scale CSS)
+  const nW=neonEl.offsetWidth, nH=neonEl.offsetHeight;
 
-  acrylicCvs.width          = cvW;
-  acrylicCvs.height         = cvH;
-  acrylicCvs.style.width    = cvW + 'px';
-  acrylicCvs.style.height   = cvH + 'px';
-  acrylicCvs.style.left     = (nL - PAD) + 'px';
-  acrylicCvs.style.top      = (nT - PAD) + 'px';
-  acrylicCvs.style.position = 'absolute';
+  // Posicionamos el canvas relativo a signContent usando offsetLeft/offsetTop del neonEl
+  // Esto funciona correctamente porque están en el mismo árbol sin scale CSS
+  const nL=neonEl.offsetLeft, nT=neonEl.offsetTop;
+  const cvW=nW+PAD*2, cvH=nH+PAD*2;
 
-  const lines   = (S.text || ' ').split('\n');
-  const fs      = currentFS;
-  const lh      = fs * 1.2;
+  acrylicCvs.width=cvW; acrylicCvs.height=cvH;
+  acrylicCvs.style.width=cvW+'px'; acrylicCvs.style.height=cvH+'px';
+  acrylicCvs.style.left=(nL-PAD)+'px'; acrylicCvs.style.top=(nT-PAD)+'px';
+  acrylicCvs.style.position='absolute';
 
-  const off = new OffscreenCanvas(cvW, cvH);
-  const ox  = off.getContext('2d');
-  ox.font         = `${fs}px '${S.font}', cursive`;
-  ox.textAlign    = 'center';
-  ox.textBaseline = 'alphabetic';
-  ox.fillStyle    = '#fff';
-
-  const met         = ox.measureText('Mg');
-  const ascent      = met.fontBoundingBoxAscent  || fs * 0.78;
-  const descent     = met.fontBoundingBoxDescent || fs * 0.22;
-  const halfLeading = (lh - (ascent + descent)) / 2;
-
-  const firstBaseline = PAD + 16 + halfLeading + ascent;
-
-  lines.forEach((ln, i) => ox.fillText(ln || ' ', cvW / 2, firstBaseline + i * lh));
-
-  function threshold(src, blurR, thr){
-    const s = new OffscreenCanvas(cvW, cvH);
-    const c = s.getContext('2d');
-    c.filter = `blur(${blurR}px)`; c.drawImage(src, 0, 0); c.filter = 'none';
-    const id = c.getImageData(0, 0, cvW, cvH), d = id.data;
-    for(let i = 3; i < d.length; i += 4) d[i] = d[i] > thr ? 255 : 0;
-    c.putImageData(id, 0, 0);
-    return s;
+  const fs=getCurrentFS();
+  const lines=(S.text||' ').split('\n'), lh=fs*1.2;
+  const off=new OffscreenCanvas(cvW,cvH), ox=off.getContext('2d');
+  ox.font=`${fs}px '${S.font}',cursive`; ox.textAlign='center'; ox.textBaseline='alphabetic'; ox.fillStyle='#fff';
+  const met=ox.measureText('Mg');
+  const ascent=met.fontBoundingBoxAscent||fs*.78, descent=met.fontBoundingBoxDescent||fs*.22;
+  const halfLeading=(lh-(ascent+descent))/2, firstBaseline=PAD+16+halfLeading+ascent;
+  lines.forEach((ln,i)=>ox.fillText(ln||' ',cvW/2,firstBaseline+i*lh));
+  function threshold(src,blurR,thr){
+    const s=new OffscreenCanvas(cvW,cvH), c=s.getContext('2d');
+    c.filter=`blur(${blurR}px)`; c.drawImage(src,0,0); c.filter='none';
+    const id=c.getImageData(0,0,cvW,cvH), d=id.data;
+    for(let i=3;i<d.length;i+=4) d[i]=d[i]>thr?255:0;
+    c.putImageData(id,0,0); return s;
   }
-
-  const silOuter = threshold(off,      16,  15);
-  const silInner = threshold(silOuter,  3, 180);
-
-  const ring = new OffscreenCanvas(cvW, cvH);
-  const rc   = ring.getContext('2d');
-  const grad = rc.createLinearGradient(0, 0, cvW * 0.7, cvH);
-  grad.addColorStop(0,   'rgba(220,230,245,0.22)');
-  grad.addColorStop(0.5, 'rgba(180,195,220,0.15)');
-  grad.addColorStop(1,   'rgba(200,215,235,0.20)');
-  rc.fillStyle = grad;
-  rc.fillRect(0, 0, cvW, cvH);
-  rc.globalCompositeOperation = 'destination-in';
-  rc.drawImage(silOuter, 0, 0);
-
-  const rim = new OffscreenCanvas(cvW, cvH);
-  const rm  = rim.getContext('2d');
-  rm.fillStyle = 'rgba(255,255,255,0.28)';
-  rm.fillRect(0, 0, cvW, cvH);
-  rm.globalCompositeOperation = 'destination-in';
-  rm.drawImage(silOuter, 0, 0);
-  rm.globalCompositeOperation = 'destination-out';
-  rm.drawImage(silInner, 0, 0);
-
-  acrylicCtx.clearRect(0, 0, cvW, cvH);
-  acrylicCtx.drawImage(ring, 0, 0);
-  acrylicCtx.drawImage(rim,  0, 0);
-  acrylicCvs.style.filter  = 'drop-shadow(0 4px 20px rgba(0,0,0,0.5))';
-  acrylicCvs.style.opacity = '1';
+  const silOuter=threshold(off,16,15), silInner=threshold(silOuter,3,180);
+  const ring=new OffscreenCanvas(cvW,cvH), rc=ring.getContext('2d');
+  const grad=rc.createLinearGradient(0,0,cvW*.7,cvH);
+  grad.addColorStop(0,'rgba(220,230,245,0.22)'); grad.addColorStop(.5,'rgba(180,195,220,0.15)'); grad.addColorStop(1,'rgba(200,215,235,0.20)');
+  rc.fillStyle=grad; rc.fillRect(0,0,cvW,cvH); rc.globalCompositeOperation='destination-in'; rc.drawImage(silOuter,0,0);
+  const rim=new OffscreenCanvas(cvW,cvH), rm=rim.getContext('2d');
+  rm.fillStyle='rgba(255,255,255,0.28)'; rm.fillRect(0,0,cvW,cvH);
+  rm.globalCompositeOperation='destination-in'; rm.drawImage(silOuter,0,0);
+  rm.globalCompositeOperation='destination-out'; rm.drawImage(silInner,0,0);
+  acrylicCtx.clearRect(0,0,cvW,cvH); acrylicCtx.drawImage(ring,0,0); acrylicCtx.drawImage(rim,0,0);
+  acrylicCvs.style.filter='drop-shadow(0 4px 20px rgba(0,0,0,0.5))'; acrylicCvs.style.opacity='1';
 }
 
-
-// ════════════════════════════════════════
-// NEON TUBE
-// ════════════════════════════════════════
-function hexToRgb(hex){
-  const r=parseInt(hex.slice(1,3),16);
-  const g=parseInt(hex.slice(3,5),16);
-  const b=parseInt(hex.slice(5,7),16);
-  return {r,g,b};
-}
-function darken(hex, factor){
-  const {r,g,b}=hexToRgb(hex);
-  return `rgb(${Math.round(r*factor)},${Math.round(g*factor)},${Math.round(b*factor)})`;
-}
-function rgba(hex, a){
-  const {r,g,b}=hexToRgb(hex);
-  return `rgba(${r},${g},${b},${a})`;
-}
-
+// ── Neon tube ──
+function hexToRgb(hex){ return {r:parseInt(hex.slice(1,3),16),g:parseInt(hex.slice(3,5),16),b:parseInt(hex.slice(5,7),16)}; }
+function darken(hex,f){ const {r,g,b}=hexToRgb(hex); return `rgb(${Math.round(r*f)},${Math.round(g*f)},${Math.round(b*f)})`; }
+function rgba(hex,a){ const {r,g,b}=hexToRgb(hex); return `rgba(${r},${g},${b},${a})`; }
 function tubeShadow(c){
-  const d1 = darken(c, 0.75);
-  const d2 = darken(c, 0.55);
-  const d3 = darken(c, 0.38);
-  const d4 = darken(c, 0.22);
-  return [
-    `1px 1px 0 ${d1}`,
-    `2px 2px 0 ${d2}`,
-    `3px 3px 0 ${d3}`,
-    `4px 4px 0 ${d4}`,
-    `5px 5px 0 rgba(255,255,255,0.85)`,
-    `6px 6px 1px rgba(0,0,0,0.3)`,
-    `0 0 3px ${c}`,
-    `0 0 8px ${c}`,
-    `0 0 18px ${rgba(c,0.7)}`,
-  ].join(',');
+  const d1=darken(c,.75),d2=darken(c,.55),d3=darken(c,.38),d4=darken(c,.22);
+  return [`1px 1px 0 ${d1}`,`2px 2px 0 ${d2}`,`3px 3px 0 ${d3}`,`4px 4px 0 ${d4}`,
+    `5px 5px 0 rgba(255,255,255,0.85)`,`6px 6px 1px rgba(0,0,0,0.3)`,
+    `0 0 3px ${c}`,`0 0 8px ${c}`,`0 0 18px ${rgba(c,.7)}`].join(',');
 }
+function tubeStroke(c){ return `1px ${darken(c,.6)}`; }
 
-function tubeStroke(c){
-  return `1px ${darken(c, 0.6)}`;
-}
-
-// ════════════════════════════════════════
-// RENDER NEON TEXT
-// ════════════════════════════════════════
+// ── Render ──
+// KEY FIX: fontSize = baseFontSize * scale (aplicado directo, sin CSS scale)
+// signContent solo aplica rotación y tilt — sin scale()
+// Así offsetWidth/offsetHeight son reales y acrylic/mount se amoldan correctamente
 function buildNeonSpans(){
-  neonEl.innerHTML = '';
-  const chars = S.text || ' ';
-  for(let i = 0; i < chars.length; i++){
-    const ch = chars[i];
-    if(ch === '\n'){
-      const br = document.createElement('span');
-      br.className = 'nchar-nl';
-      neonEl.appendChild(br);
-      continue;
-    }
-    const sp = document.createElement('span');
-    sp.className = 'nchar';
-    sp.dataset.idx = i;
-    sp.textContent = ch === ' ' ? '\u00A0' : ch;
-    const ov = S.charOverrides[i];
+  neonEl.innerHTML='';
+  const chars=S.text||' ';
+  for(let i=0;i<chars.length;i++){
+    const ch=chars[i];
+    if(ch==='\n'){ const br=document.createElement('span'); br.className='nchar-nl'; neonEl.appendChild(br); continue; }
+    const sp=document.createElement('span'); sp.className='nchar'; sp.dataset.idx=i;
+    sp.textContent=ch===' '?'\u00A0':ch;
+    const ov=S.charOverrides[i];
     if(ov){
-      if(ov.font) sp.style.fontFamily = `'${ov.font}', cursive`;
-      if(ov.color){
-        sp.style.color = ov.color;
-        if(S.power){
-          const c = ov.color;
-          sp.style.textShadow = tubeShadow(c);
-          sp.style.webkitTextStroke = tubeStroke(c);
-        }
-      }
+      if(ov.font) sp.style.fontFamily=`'${ov.font}',cursive`;
+      if(ov.color){ sp.style.color=ov.color; if(S.power){ sp.style.textShadow=tubeShadow(ov.color); sp.style.webkitTextStroke=tubeStroke(ov.color); } }
     }
-    if(i === activeCharIdx) sp.classList.add('selected');
+    if(i===activeCharIdx) sp.classList.add('selected');
     neonEl.appendChild(sp);
   }
-  if(activeCharIdx !== null && charMenu.classList.contains('visible')){
-    const freshSpan = neonEl.querySelector(`.nchar[data-idx="${activeCharIdx}"]`);
+  if(activeCharIdx!==null&&charMenu.classList.contains('visible')){
+    const freshSpan=neonEl.querySelector(`.nchar[data-idx="${activeCharIdx}"]`);
     if(freshSpan) _repositionMenu(freshSpan);
   }
 }
 
 function _repositionMenu(spanEl){
-  const wRect = signWrapper.getBoundingClientRect();
-  const sRect = spanEl.getBoundingClientRect();
-  const sc    = S.scale;
-  const cx    = (sRect.left + sRect.width / 2 - wRect.left) / sc;
-  const ty    = (sRect.top - wRect.top) / sc - 14;
-  charMenu.style.left      = cx + 'px';
-  charMenu.style.top       = ty + 'px';
+  // charMenu está en previewCanvas (position:relative)
+  // Calculamos posición del span en coords de pantalla y la convertimos al espacio del canvas
+  const cRect=previewCanvas.getBoundingClientRect();
+  const sRect=spanEl.getBoundingClientRect();
+  // Centro horizontal y borde superior del span, relativo al canvas
+  const cx = sRect.left + sRect.width/2 - cRect.left;
+  const ty = sRect.top - cRect.top - 10;
+  charMenu.style.left = cx + 'px';
+  charMenu.style.top  = ty + 'px';
+  // Sin contra-rotación: el menú siempre queda horizontal (está fuera del letrero)
   charMenu.style.transform = 'translateX(-50%) translateY(-100%)';
 }
 
 function renderNeon(){
+  const fs = getCurrentFS();
+
+  // Aplicar fontSize directamente — esto es lo que hace que offsetWidth sea real
   neonEl.style.fontFamily = `'${S.font}', cursive`;
-  neonEl.style.fontSize   = currentFS + 'px';
+  neonEl.style.fontSize   = fs + 'px';
 
-  signWrapper.style.left      = `calc(50% + ${S.posX}px)`;
-  signWrapper.style.top       = `calc(50% + ${S.posY}px)`;
-  signWrapper.style.transform = `translate(-50%,-50%) rotateY(${S.tiltY}deg) rotate(${S.rotation}deg) scale(${S.scale})`;
+  // posWrapper: solo traslación → se mueve pero no rota
+  posWrapper.style.transform = `translate(calc(-50% + ${S.posX}px), calc(-50% + ${S.posY}px))`;
 
+  // signWrapper: rotación 2D → handles y badges orbitan con el letrero
+  signWrapper.style.transform = `rotate(${S.rotation}deg)`;
+
+  // signContent: solo tilt (rotateY) — sin rotate aquí
+  signContent.style.transform = `rotateY(${S.tiltY}deg)`;
+
+  // POWER OFF
   if(!S.power){
-    neonEl.style.color = '#5a5a5a';
-    neonEl.style.textShadow = 'none';
-    neonEl.style.webkitTextStroke = '0px transparent';
+    neonEl.style.color='#5a5a5a';
+    neonEl.style.textShadow='none';
+    neonEl.style.webkitTextStroke='0px transparent';
     buildNeonSpans();
-    neonEl.querySelectorAll('.nchar').forEach(sp => {
-      sp.style.textShadow = 'none';
-      sp.style.webkitTextStroke = '0px transparent';
-      sp.style.color = '';
-    });
     if(S.backing) drawAcrylic();
+    applyMount();
     return;
   }
 
-  const c = (S.rgb && rgbInt) ? currentRGBColor : S.color;
-  neonEl.style.color = c;
-  neonEl.style.textShadow = tubeShadow(c);
-  neonEl.style.webkitTextStroke = tubeStroke(c);
+  // POWER ON
+  const c=(S.rgb&&rgbInt)?currentRGBColor:S.color;
+  neonEl.style.color=c;
+  neonEl.style.textShadow=tubeShadow(c);
+  neonEl.style.webkitTextStroke=tubeStroke(c);
 
   buildNeonSpans();
-
   if(S.backing) drawAcrylic();
+  applyMount();
 }
 
 function updateDimBadge(){
-  const cmW = Math.round(40 * S.scale);
-  document.getElementById('dimBadge').textContent = `~ ${cmW} × ${Math.round(cmW*.38)} cm`;
+  requestAnimationFrame(()=>{
+    // Medida relativa al canvas: a escala 1 el letrero ocupa ~78% del ancho del canvas
+    // Un letrero de neón promedio en ese espacio ≈ 60cm de ancho
+    // Calculamos el ratio del letrero respecto al canvas y lo escaleamos
+    const canvasW = previewCanvas.offsetWidth || 800;
+    const pxW = neonEl.offsetWidth;
+    const pxH = neonEl.offsetHeight;
+    // 60cm base cuando el letrero ocupa ~78% del canvas (eso es el ancho máximo de la fuente base)
+    const BASE_CM = 140;
+    const BASE_PX = canvasW * 0.90;
+    const cmW = Math.max(5, Math.round((pxW / BASE_PX) * BASE_CM));
+    const cmH = Math.max(2, Math.round((pxH / BASE_PX) * BASE_CM));
+    document.getElementById('dimBadge').textContent = `~ ${cmW} × ${cmH} cm`;
+  });
 }
 
-// ════════════════════════════════════════
-// POSITION
-// ════════════════════════════════════════
-function applyTransform(){
-  signWrapper.style.left      = `calc(50% + ${S.posX}px)`;
-  signWrapper.style.top       = `calc(50% + ${S.posY}px)`;
-  signWrapper.style.transform = `translate(-50%,-50%) rotateY(${S.tiltY}deg) rotate(${S.rotation}deg) scale(${S.scale})`;
-}
 function resetPosition(){ S.posX=0; S.posY=0; S.scale=1; S.rotation=0; S.tiltY=0; renderNeon(); updateDimBadge(); }
 
-// ════════════════════════════════════════
-// MOUNT
-// ════════════════════════════════════════
+// ── Mount ──
 function applyMount(){
-  mountPlate.style.cssText=''; mountHook.style.display='none';
-  mountBase.style.display='none'; mountScrews.style.display='none';
+  mountPlate.style.cssText=''; mountPlate.style.opacity='0';
+  mountHook.style.display='none'; mountBase.style.display='none'; mountScrews.style.display='none';
 
-  const hasPlate = ['acrilico-cuadrado','acrilico-redondo','colgar'].includes(S.mount);
-  if(hasPlate && S.backing){
-    acrylicCvs.style.opacity='0';
-  } else if(S.backing){
-    drawAcrylic();
-  }
+  // SIN backdrop-filter: causa que handles/hints se vean borrosos al estar en el mismo stacking context
+  const plateStyle='position:absolute;z-index:0;pointer-events:none;background:linear-gradient(160deg,rgba(220,230,245,.22) 0%,rgba(180,195,220,.15) 50%,rgba(200,215,235,.20) 100%);opacity:1;box-shadow:0 4px 28px rgba(0,0,0,.55),inset 0 0 0 1.5px rgba(255,255,255,.28),inset 0 1px 0 rgba(255,255,255,.4);';
+
+  // mountPlate vive dentro de signContent → coords relativas al neonEl via offsetLeft/offsetTop
+  const applyRect=(padX,padY,extra='')=>{
+    requestAnimationFrame(()=>{
+      const nL=neonEl.offsetLeft, nT=neonEl.offsetTop;
+      const nW=neonEl.offsetWidth,  nH=neonEl.offsetHeight;
+      mountPlate.style.cssText=plateStyle+
+        `left:${nL-padX}px;top:${nT-padY}px;width:${nW+padX*2}px;height:${nH+padY*2}px;${extra}`;
+    });
+  };
 
   if(S.mount==='colgar'){
-    mountHook.style.cssText='display:block;position:absolute;left:50%;top:-70px;transform:translateX(-50%);width:2px;height:70px;background:repeating-linear-gradient(to bottom,#aaa 0,#aaa 4px,#888 4px,#888 8px);box-shadow:0 0 4px rgba(0,0,0,.5);';
-    mountPlate.style.cssText='position:absolute;inset:-18px -22px;border-radius:10px;background:linear-gradient(160deg,rgba(220,230,245,.18) 0%,rgba(180,195,220,.12) 50%,rgba(200,215,235,.16) 100%);opacity:1;backdrop-filter:blur(1px);box-shadow:0 4px 28px rgba(0,0,0,.55),inset 0 0 0 1.5px rgba(255,255,255,.22),inset 0 1px 0 rgba(255,255,255,.35);';
+    mountHook.style.cssText='display:block;position:absolute;left:50%;top:-70px;transform:translateX(-50%);width:2px;height:70px;z-index:1;background:repeating-linear-gradient(to bottom,#aaa 0,#aaa 4px,#888 4px,#888 8px);box-shadow:0 0 4px rgba(0,0,0,.5);';
+    applyRect(22,18,'border-radius:10px;');
   }
-
   if(S.mount==='acrilico-cuadrado'){
-    mountPlate.style.cssText='position:absolute;inset:-18px -22px;border-radius:10px;background:linear-gradient(160deg,rgba(220,230,245,.18) 0%,rgba(180,195,220,.12) 50%,rgba(200,215,235,.16) 100%);opacity:1;backdrop-filter:blur(1px);box-shadow:0 4px 28px rgba(0,0,0,.55),inset 0 0 0 1.5px rgba(255,255,255,.22),inset 0 1px 0 rgba(255,255,255,.35);';
+    applyRect(22,18,'border-radius:10px;');
+  }
+  if(S.mount==='acrilico-redondo'){
+    requestAnimationFrame(()=>{
+      const nL=neonEl.offsetLeft, nT=neonEl.offsetTop;
+      const nW=neonEl.offsetWidth,  nH=neonEl.offsetHeight;
+      const PAD=12, diameter=Math.max(nW,nH)+PAD*2;
+      const cx=nL+nW/2, cy=nT+nH/2;
+      mountPlate.style.cssText=plateStyle+
+        `width:${diameter}px;height:${diameter}px;left:${cx-diameter/2}px;top:${cy-diameter/2}px;border-radius:50%;`;
+    });
   }
 
-  if(S.mount==='acrilico-redondo'){
-    const w=signWrapper.offsetWidth+44, h=signWrapper.offsetHeight+44;
-    const side=Math.max(w,h);
-    const offsetX=(w-side)/2-22, offsetY=(h-side)/2-22;
-    mountPlate.style.cssText='position:absolute;width:'+side+'px;height:'+side+'px;left:'+offsetX+'px;top:'+offsetY+'px;border-radius:50%;background:linear-gradient(160deg,rgba(220,230,245,.18) 0%,rgba(180,195,220,.12) 50%,rgba(200,215,235,.16) 100%);opacity:1;backdrop-filter:blur(1px);box-shadow:0 4px 28px rgba(0,0,0,.55),inset 0 0 0 1.5px rgba(255,255,255,.22),inset 0 1px 0 rgba(255,255,255,.35);';
+  if(S.backing){
+    if(S.mount==='libre') drawAcrylic();
+    else acrylicCvs.style.opacity='0';
   }
 }
 
-
-// ════════════════════════════════════════
-// CHAR EDITOR
-// ════════════════════════════════════════
-const FONTS_LIST = [
-  {k:'Pacifico',       l:'Pacifico'},
-  {k:'Courgette',      l:'Courgette'},
-  {k:'Yellowtail',     l:'Yellowtail'},
-  {k:'Cookie',         l:'Cookie'},
-  {k:'Kaushan Script', l:'Kaushan'},
-  {k:'Comfortaa',      l:'Comfortaa'},
-  {k:'Nunito',         l:'Nunito'},
-  {k:'Raleway',        l:'Raleway'},
-  {k:'Righteous',      l:'Righteous'},
-  {k:'Orbitron',       l:'Orbitron'},
+// ── Char editor ──
+const FONTS_LIST=[
+  {k:'Pacifico',l:'Pacifico'},{k:'Courgette',l:'Courgette'},{k:'Yellowtail',l:'Yellowtail'},
+  {k:'Cookie',l:'Cookie'},{k:'Kaushan Script',l:'Kaushan'},{k:'Dancing Script',l:'Dancing'},
+  {k:'Great Vibes',l:'Great Vibes'},{k:'Sacramento',l:'Sacramento'},{k:'Lobster',l:'Lobster'},
+  {k:'Rock Salt',l:'Rock Salt'},{k:'Amatic SC',l:'Amatic SC'},{k:'Comfortaa',l:'Comfortaa'},
+  {k:'Nunito',l:'Nunito'},{k:'Raleway',l:'Raleway'},{k:'Righteous',l:'Righteous'},
 ];
-const COLORS_LIST = [
+const COLORS_LIST=[
   {c:'#b3f0ff',n:'Azul Hielo'},{c:'#ff2222',n:'Roja'},{c:'#ffb300',n:'Amber'},
   {c:'#e8ff00',n:'Amarillo Limón'},{c:'#bf00ff',n:'Morado'},{c:'#00ff88',n:'Verde'},
   {c:'#39ff14',n:'Verde Mars'},{c:'#3b82f6',n:'Azul'},{c:'#ff3cac',n:'Rosa'},
   {c:'#ffd700',n:'Amarillo Dorado'},{c:'#ff8800',n:'Naranja'},{c:'#e8f4ff',n:'Blanca Fría'},
 ];
-
-const charMenu      = document.getElementById('charMenu');
-charMenu.addEventListener('pointerdown', e => e.stopPropagation());
-const cmenuFontName = document.getElementById('cmenuFontName');
-const cmenuColorBtn = document.getElementById('cmenuColorBtn');
-const cmenuColorSub = document.getElementById('cmenuColorSub');
-let activeCharIdx   = null;
-let cmenuFontIdx    = 0;
-
-COLORS_LIST.forEach(col => {
-  const sw = document.createElement('div');
-  sw.className = 'cmenu-csw';
-  sw.style.background = col.c;
-  sw.title = col.n;
-  sw.dataset.color = col.c;
-  cmenuColorSub.appendChild(sw);
+charMenu.addEventListener('pointerdown',e=>e.stopPropagation());
+const cmenuFontName=document.getElementById('cmenuFontName');
+const cmenuColorBtn=document.getElementById('cmenuColorBtn');
+const cmenuColorSub=document.getElementById('cmenuColorSub');
+let activeCharIdx=null, cmenuFontIdx=0;
+COLORS_LIST.forEach(col=>{
+  const sw=document.createElement('div'); sw.className='cmenu-csw'; sw.style.background=col.c; sw.title=col.n; sw.dataset.color=col.c; cmenuColorSub.appendChild(sw);
 });
-
 function openCharMenu(spanEl){
-  const idx = parseInt(spanEl.dataset.idx);
-  activeCharIdx = idx;
-
-  neonEl.querySelectorAll('.nchar.selected').forEach(s => s.classList.remove('selected'));
-  spanEl.classList.add('selected');
-
-  const ov       = S.charOverrides[idx] || {};
-  const curFont  = ov.font  || S.font;
-  const curColor = ov.color || S.color;
-
-  cmenuFontIdx = FONTS_LIST.findIndex(f => f.k === curFont);
-  if(cmenuFontIdx < 0) cmenuFontIdx = 0;
-  updateFontCarousel();
-
-  cmenuColorBtn.style.background = curColor;
-  cmenuColorSub.querySelectorAll('.cmenu-csw').forEach(s =>
-    s.classList.toggle('on', s.dataset.color === curColor)
-  );
-  cmenuColorSub.classList.remove('open');
-
-  _repositionMenu(spanEl);
-  charMenu.classList.add('visible');
+  const idx=parseInt(spanEl.dataset.idx); activeCharIdx=idx;
+  neonEl.querySelectorAll('.nchar.selected').forEach(s=>s.classList.remove('selected')); spanEl.classList.add('selected');
+  const ov=S.charOverrides[idx]||{}, curFont=ov.font||S.font, curColor=ov.color||S.color;
+  cmenuFontIdx=FONTS_LIST.findIndex(f=>f.k===curFont); if(cmenuFontIdx<0)cmenuFontIdx=0;
+  updateFontCarousel(); cmenuColorBtn.style.background=curColor;
+  cmenuColorSub.querySelectorAll('.cmenu-csw').forEach(s=>s.classList.toggle('on',s.dataset.color===curColor));
+  cmenuColorSub.classList.remove('open'); _repositionMenu(spanEl); charMenu.classList.add('visible');
 }
-
 function closeCharMenu(){
-  charMenu.classList.remove('visible');
-  cmenuColorSub.classList.remove('open');
-  neonEl.querySelectorAll('.nchar.selected').forEach(s => s.classList.remove('selected'));
-  activeCharIdx = null;
+  charMenu.classList.remove('visible'); cmenuColorSub.classList.remove('open');
+  neonEl.querySelectorAll('.nchar.selected').forEach(s=>s.classList.remove('selected')); activeCharIdx=null;
 }
-
-function updateFontCarousel(){
-  const f = FONTS_LIST[cmenuFontIdx];
-  cmenuFontName.textContent   = f.l;
-  cmenuFontName.style.fontFamily = `'${f.k}', cursive`;
-}
-
+function updateFontCarousel(){ const f=FONTS_LIST[cmenuFontIdx]; cmenuFontName.textContent=f.l; cmenuFontName.style.fontFamily=`'${f.k}',cursive`; }
 function applyCarouselFont(){
-  if(activeCharIdx === null) return;
-  if(!S.charOverrides[activeCharIdx]) S.charOverrides[activeCharIdx] = {};
-  S.charOverrides[activeCharIdx].font = FONTS_LIST[cmenuFontIdx].k;
-  renderNeon();
+  if(activeCharIdx===null)return;
+  if(!S.charOverrides[activeCharIdx])S.charOverrides[activeCharIdx]={};
+  S.charOverrides[activeCharIdx].font=FONTS_LIST[cmenuFontIdx].k; renderNeon();
 }
-
-document.getElementById('cmenuPrev').addEventListener('click', e => {
-  e.stopPropagation();
-  cmenuFontIdx = (cmenuFontIdx - 1 + FONTS_LIST.length) % FONTS_LIST.length;
-  updateFontCarousel(); applyCarouselFont();
+document.getElementById('cmenuPrev').addEventListener('click',e=>{ e.stopPropagation(); cmenuFontIdx=(cmenuFontIdx-1+FONTS_LIST.length)%FONTS_LIST.length; updateFontCarousel(); applyCarouselFont(); });
+document.getElementById('cmenuNext').addEventListener('click',e=>{ e.stopPropagation(); cmenuFontIdx=(cmenuFontIdx+1)%FONTS_LIST.length; updateFontCarousel(); applyCarouselFont(); });
+cmenuColorBtn.addEventListener('click',e=>{ e.stopPropagation(); cmenuColorSub.classList.toggle('open'); });
+cmenuColorSub.addEventListener('click',e=>{
+  const sw=e.target.closest('.cmenu-csw'); if(!sw)return; e.stopPropagation(); if(activeCharIdx===null)return;
+  if(!S.charOverrides[activeCharIdx])S.charOverrides[activeCharIdx]={};
+  S.charOverrides[activeCharIdx].color=sw.dataset.color; cmenuColorBtn.style.background=sw.dataset.color;
+  cmenuColorSub.querySelectorAll('.cmenu-csw').forEach(s=>s.classList.toggle('on',s===sw)); cmenuColorSub.classList.remove('open'); renderNeon();
 });
-document.getElementById('cmenuNext').addEventListener('click', e => {
-  e.stopPropagation();
-  cmenuFontIdx = (cmenuFontIdx + 1) % FONTS_LIST.length;
-  updateFontCarousel(); applyCarouselFont();
-});
+document.getElementById('cmenuReset').addEventListener('click',e=>{ e.stopPropagation(); if(activeCharIdx===null)return; delete S.charOverrides[activeCharIdx]; closeCharMenu(); renderNeon(); });
+document.addEventListener('pointerdown',e=>{ if(!charMenu.classList.contains('visible'))return; if(charMenu.contains(e.target))return; if(e.target.closest('.nchar'))return; closeCharMenu(); });
+signWrapper.addEventListener('pointermove',()=>{ if(dragging)closeCharMenu(); });
 
-cmenuColorBtn.addEventListener('click', e => {
-  e.stopPropagation();
-  cmenuColorSub.classList.toggle('open');
-});
-
-cmenuColorSub.addEventListener('click', e => {
-  const sw = e.target.closest('.cmenu-csw'); if(!sw) return;
-  e.stopPropagation();
-  if(activeCharIdx === null) return;
-  if(!S.charOverrides[activeCharIdx]) S.charOverrides[activeCharIdx] = {};
-  S.charOverrides[activeCharIdx].color = sw.dataset.color;
-  cmenuColorBtn.style.background = sw.dataset.color;
-  cmenuColorSub.querySelectorAll('.cmenu-csw').forEach(s => s.classList.toggle('on', s === sw));
-  cmenuColorSub.classList.remove('open');
-  renderNeon();
-});
-
-document.getElementById('cmenuReset').addEventListener('click', e => {
-  e.stopPropagation();
-  if(activeCharIdx === null) return;
-  delete S.charOverrides[activeCharIdx];
-  closeCharMenu();
-  renderNeon();
-});
-
-document.addEventListener('pointerdown', e => {
-  if(!charMenu.classList.contains('visible')) return;
-  if(charMenu.contains(e.target)) return;
-  if(e.target.closest('.nchar')) return;
-  closeCharMenu();
-});
-
-signWrapper.addEventListener('pointermove', () => {
-  if(dragging) closeCharMenu();
-});
-
-
-// ════════════════════════════════════════
-// ROTATE HANDLE
-// ════════════════════════════════════════
-const rotHandle   = document.getElementById('rotateHandle');
-const angleBadge  = document.getElementById('angleBadge');
-let rotating      = false;
-let rotStartAngle = 0;
-let rotAtStart    = 0;
-
-function getAngleFromCenter(clientX, clientY){
-  const rect = signWrapper.getBoundingClientRect();
-  const cx   = rect.left + rect.width  / 2;
-  const cy   = rect.top  + rect.height / 2;
-  return Math.atan2(clientY - cy, clientX - cx) * (180 / Math.PI);
+// ── Rotate ──
+const rotHandle=document.getElementById('rotateHandle'), angleBadge=document.getElementById('angleBadge');
+let rotating=false, rotStartAngle=0, rotAtStart=0;
+// Usamos posWrapper como centro de rotación (es el punto fijo de traslación)
+function getAngleFromCenter(x,y){
+  const r=posWrapper.getBoundingClientRect();
+  return Math.atan2(y-(r.top+r.height/2), x-(r.left+r.width/2))*(180/Math.PI);
 }
+rotHandle.addEventListener('pointerdown',e=>{ e.stopPropagation();e.preventDefault(); rotating=true; rotStartAngle=getAngleFromCenter(e.clientX,e.clientY); rotAtStart=S.rotation; rotHandle.setPointerCapture(e.pointerId); rotHandle.classList.add('active'); angleBadge.classList.add('visible'); });
+rotHandle.addEventListener('pointermove',e=>{ if(!rotating)return; S.rotation=rotAtStart+getAngleFromCenter(e.clientX,e.clientY)-rotStartAngle; const diff=S.rotation-Math.round(S.rotation/90)*90; if(Math.abs(diff)<4)S.rotation=Math.round(S.rotation/90)*90; renderNeon(); angleBadge.textContent=((Math.round(S.rotation)%360)+360)%360+'°'; });
+rotHandle.addEventListener('pointerup',()=>{ rotating=false; rotHandle.classList.remove('active'); setTimeout(()=>angleBadge.classList.remove('visible'),800); scheduleHint(); });
 
-rotHandle.addEventListener('pointerdown', e => {
-  e.stopPropagation();
-  e.preventDefault();
-  rotating      = true;
-  rotStartAngle = getAngleFromCenter(e.clientX, e.clientY);
-  rotAtStart    = S.rotation;
-  rotHandle.setPointerCapture(e.pointerId);
-  rotHandle.classList.add('active');
-  angleBadge.classList.add('visible');
-});
+// ── Hint ──
+const sizeHint=document.getElementById('sizeHint'); let hintTimer=null, hintShown=false;
+function scheduleHint(){ clearTimeout(hintTimer); hideHint(); hintTimer=setTimeout(showHint,1500); }
+function showHint(){ if(hintShown)return; hintShown=true; sizeHint.style.opacity='1'; hintTimer=setTimeout(hideHint,3000); }
+function hideHint(){ hintShown=false; sizeHint.style.opacity='0'; clearTimeout(hintTimer); }
 
-rotHandle.addEventListener('pointermove', e => {
-  if(!rotating) return;
-  const current = getAngleFromCenter(e.clientX, e.clientY);
-  let delta = current - rotStartAngle;
-  S.rotation = rotAtStart + delta;
-  const snaps = [0, 90, 180, 270, -90, -180, -270, 360, -360];
-  const nearest = snaps.find(s => Math.abs((S.rotation % 360) - s) < 4 || Math.abs(S.rotation - s) < 4);
-  if(nearest !== undefined){
-    const diff = S.rotation - Math.round(S.rotation / 90) * 90;
-    if(Math.abs(diff) < 4) S.rotation = Math.round(S.rotation / 90) * 90;
-  }
-  applyTransform();
-  const display = ((Math.round(S.rotation) % 360) + 360) % 360;
-  angleBadge.textContent = display + '°';
-});
+// ── Tilt ──
+const tiltHandleY=document.getElementById('tiltHandleY'), tiltBadge=document.getElementById('tiltBadge');
+let tilting=false, tiltStartX=0, tiltAtStart=0, tiltTimer=null;
+tiltHandleY.addEventListener('pointerdown',e=>{ e.stopPropagation();e.preventDefault(); tilting=true; tiltStartX=e.clientX; tiltAtStart=S.tiltY; hideHint(); tiltHandleY.setPointerCapture(e.pointerId); tiltHandleY.classList.add('active'); tiltBadge.classList.add('visible'); });
+document.addEventListener('pointermove',e=>{ if(!tilting)return; let val=tiltAtStart+(e.clientX-tiltStartX)*.4; val=Math.max(-80,Math.min(80,val)); if(Math.abs(val)<3)val=0; S.tiltY=val; renderNeon(); tiltBadge.textContent=Math.round(val)+'°'; });
+document.addEventListener('pointerup',()=>{ if(!tilting)return; tilting=false; tiltHandleY.classList.remove('active'); clearTimeout(tiltTimer); tiltTimer=setTimeout(()=>tiltBadge.classList.remove('visible'),800); scheduleHint(); });
 
-rotHandle.addEventListener('pointerup', () => {
-  rotating = false;
-  rotHandle.classList.remove('active');
-  setTimeout(() => angleBadge.classList.remove('visible'), 800);
-  scheduleHint();
-});
-
-// ════════════════════════════════════════
-// SIZE HINT
-// ════════════════════════════════════════
-const sizeHint   = document.getElementById('sizeHint');
-let hintTimer    = null;
-let hintShown    = false;
-
-function scheduleHint(){
-  clearTimeout(hintTimer);
-  hideHint();
-  hintTimer = setTimeout(showHint, 1500);
-}
-
-function showHint(){
-  if(hintShown) return;
-  hintShown = true;
-  sizeHint.style.opacity = '1';
-  hintTimer = setTimeout(hideHint, 3000);
-}
-
-function hideHint(){
-  hintShown = false;
-  sizeHint.style.opacity = '0';
-  clearTimeout(hintTimer);
-}
-
-
-// ════════════════════════════════════════
-// TILT HANDLES
-// ════════════════════════════════════════
-const tiltHandleY = document.getElementById('tiltHandleY');
-const tiltBadge   = document.getElementById('tiltBadge');
-let tilting       = false;
-let tiltStartX    = 0;
-let tiltAtStart   = 0;
-let tiltTimer     = null;
-
-tiltHandleY.addEventListener('pointerdown', e => {
-  e.stopPropagation(); e.preventDefault();
-  tilting      = true;
-  tiltStartX   = e.clientX;
-  tiltAtStart  = S.tiltY;
-  hideHint();
-  tiltHandleY.setPointerCapture(e.pointerId);
-  tiltHandleY.classList.add('active');
-  tiltBadge.classList.add('visible');
-});
-
-document.addEventListener('pointermove', e => {
-  if(!tilting) return;
-  let val = tiltAtStart + (e.clientX - tiltStartX) * 0.4;
-  val = Math.max(-80, Math.min(80, val));
-  if(Math.abs(val) < 3) val = 0;
-  S.tiltY = val;
-  applyTransform();
-  tiltBadge.textContent = Math.round(val) + '°';
-});
-
-document.addEventListener('pointerup', () => {
-  if(!tilting) return;
-  tilting = false;
-  tiltHandleY.classList.remove('active');
-  clearTimeout(tiltTimer);
-  tiltTimer = setTimeout(() => tiltBadge.classList.remove('visible'), 800);
-  scheduleHint();
-});
-
-// ════════════════════════════════════════
-// DRAG — letrero
-// ════════════════════════════════════════
-let dragging=false, dragStartX=0, dragStartY=0, posAtDragX=0, posAtDragY=0;
-let pointerDownTarget=null;
-let charPointerMoved=false;
+// ── Drag letrero ──
+let dragging=false, dragStartX=0, dragStartY=0, posAtDragX=0, posAtDragY=0, pointerDownTarget=null, charPointerMoved=false;
 signWrapper.addEventListener('pointerdown',e=>{
-  if(e.target.closest('#resizeHandle')) return;
-  hideHint();
-  pointerDownTarget=e.target;
-  charPointerMoved=false;
-  dragging=true; dragStartX=e.clientX; dragStartY=e.clientY;
-  posAtDragX=S.posX; posAtDragY=S.posY;
+  if(e.target.closest('#resizeHandle'))return;
+  hideHint(); pointerDownTarget=e.target; charPointerMoved=false; dragging=true;
+  dragStartX=e.clientX; dragStartY=e.clientY; posAtDragX=S.posX; posAtDragY=S.posY;
   signWrapper.setPointerCapture(e.pointerId); e.preventDefault(); e.stopPropagation();
 });
 signWrapper.addEventListener('pointermove',e=>{
-  if(!dragging) return;
-  const dx=e.clientX-dragStartX, dy=e.clientY-dragStartY;
-  if(Math.abs(dx)>4||Math.abs(dy)>4) charPointerMoved=true;
-  S.posX=posAtDragX+dx;
-  S.posY=posAtDragY+dy;
-  applyTransform();
+  if(!dragging)return; const dx=e.clientX-dragStartX, dy=e.clientY-dragStartY;
+  if(Math.abs(dx)>4||Math.abs(dy)>4)charPointerMoved=true; S.posX=posAtDragX+dx; S.posY=posAtDragY+dy; renderNeon();
 });
 signWrapper.addEventListener('pointerup',e=>{
   dragging=false;
-  if(!charPointerMoved){
-    const sp=pointerDownTarget && pointerDownTarget.closest('.nchar');
-    if(sp) openCharMenu(sp);
-  }
-  pointerDownTarget=null;
-  scheduleHint();
+  if(!charPointerMoved){ const sp=pointerDownTarget&&pointerDownTarget.closest('.nchar'); if(sp)openCharMenu(sp); }
+  pointerDownTarget=null; scheduleHint();
 });
 
-// DRAG — fondo
+// ── Drag fondo ──
 let bgDragging=false, bgStartX=0, bgStartY=0, bgAtX=50, bgAtY=50;
-previewCanvas.addEventListener('pointerdown',e=>{
-  if(e.target.closest('#signWrapper')) return;
-  bgDragging=true; bgStartX=e.clientX; bgStartY=e.clientY; bgAtX=S.bgX; bgAtY=S.bgY;
-  previewCanvas.style.cursor='grabbing'; previewCanvas.setPointerCapture(e.pointerId);
-});
-previewCanvas.addEventListener('pointermove',e=>{
-  if(!bgDragging) return;
-  S.bgX=Math.max(0,Math.min(100,bgAtX-(e.clientX-bgStartX)*.04));
-  S.bgY=Math.max(0,Math.min(100,bgAtY-(e.clientY-bgStartY)*.04));
-  previewCanvas.style.backgroundPosition=`${S.bgX}% ${S.bgY}%`;
-});
+previewCanvas.addEventListener('pointerdown',e=>{ if(e.target.closest('#signWrapper'))return; bgDragging=true; bgStartX=e.clientX; bgStartY=e.clientY; bgAtX=S.bgX; bgAtY=S.bgY; previewCanvas.style.cursor='grabbing'; previewCanvas.setPointerCapture(e.pointerId); });
+previewCanvas.addEventListener('pointermove',e=>{ if(!bgDragging)return; S.bgX=Math.max(0,Math.min(100,bgAtX-(e.clientX-bgStartX)*.04)); S.bgY=Math.max(0,Math.min(100,bgAtY-(e.clientY-bgStartY)*.04)); previewCanvas.style.backgroundPosition=`${S.bgX}% ${S.bgY}%`; });
 previewCanvas.addEventListener('pointerup',()=>{ bgDragging=false; previewCanvas.style.cursor='default'; });
 
-// ════════════════════════════════════════
-// RESIZE
-// ════════════════════════════════════════
+// ── Resize: ahora modifica S.scale que se traduce a fontSize directamente ──
 const rHandle=document.getElementById('resizeHandle');
 let resizing=false, resizeStartX=0, scaleAtResize=1;
 rHandle.addEventListener('pointerdown',e=>{ hideHint(); resizing=true; resizeStartX=e.clientX; scaleAtResize=S.scale; rHandle.setPointerCapture(e.pointerId); e.stopPropagation(); e.preventDefault(); });
@@ -1290,18 +867,14 @@ rHandle.addEventListener('pointerup',()=>{ resizing=false; scheduleHint(); });
 
 previewCanvas.addEventListener('wheel',e=>{ e.preventDefault(); S.scale=Math.max(.15,Math.min(3,S.scale-e.deltaY*.001)); renderNeon(); updateDimBadge(); },{passive:false});
 
-// ════════════════════════════════════════
-// PINCH TO ZOOM
-// ════════════════════════════════════════
+// ── Pinch ──
 let lastPinchDist=null;
 previewCanvas.addEventListener('touchstart',e=>{ if(e.touches.length===2){lastPinchDist=getPinchDist(e.touches);e.preventDefault();} },{passive:false});
 previewCanvas.addEventListener('touchmove',e=>{ if(e.touches.length===2&&lastPinchDist!==null){ const d=getPinchDist(e.touches); S.scale=Math.max(.15,Math.min(3,S.scale+(d-lastPinchDist)*.005)); lastPinchDist=d; renderNeon(); updateDimBadge(); e.preventDefault(); } },{passive:false});
 previewCanvas.addEventListener('touchend',e=>{ if(e.touches.length<2)lastPinchDist=null; });
 function getPinchDist(t){return Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);}
 
-// ════════════════════════════════════════
-// CONTROLS
-// ════════════════════════════════════════
+// ── Controls ──
 document.getElementById('textInput').addEventListener('input',function(){
   const v=this.value.slice(0,60); this.value=v; S.text=v;
   document.getElementById('charCount').textContent=v.length+' caracteres';
@@ -1309,276 +882,115 @@ document.getElementById('textInput').addEventListener('input',function(){
 });
 document.getElementById('fontGrid').addEventListener('click',e=>{
   const b=e.target.closest('.fbtn'); if(!b)return;
-  document.querySelectorAll('.fbtn').forEach(x=>x.classList.remove('on'));
-  b.classList.add('on'); S.font=b.dataset.font; recalcFontSize(); dots();
+  document.querySelectorAll('.fbtn').forEach(x=>x.classList.remove('on')); b.classList.add('on'); S.font=b.dataset.font;
+  recalcFontSize(); dots();
 });
 document.getElementById('colorGrid').addEventListener('click',e=>{
   const s=e.target.closest('.cswatch'); if(!s)return;
-  document.querySelectorAll('.cswatch').forEach(x=>x.classList.remove('on'));
-  s.classList.add('on'); S.color=s.dataset.c;
-  document.getElementById('colorLabel').textContent=s.dataset.n;
-  renderNeon(); dots();
+  document.querySelectorAll('.cswatch').forEach(x=>x.classList.remove('on')); s.classList.add('on'); S.color=s.dataset.c;
+  document.getElementById('colorLabel').textContent=s.dataset.n; renderNeon(); dots();
 });
 document.getElementById('wallGrid').addEventListener('click',e=>{
   const b=e.target.closest('.wbtn'); if(!b)return;
-  document.querySelectorAll('.wbtn').forEach(x=>x.classList.remove('on'));
-  b.classList.add('on');
-  previewCanvas.style.backgroundImage=`url('${b.dataset.url}')`;
-  overlay.style.background=`rgba(0,0,0,${b.dataset.ov})`;
-  dots();
+  document.querySelectorAll('.wbtn').forEach(x=>x.classList.remove('on')); b.classList.add('on');
+  previewCanvas.style.backgroundImage=`url('${b.dataset.url}')`; overlay.style.background=`rgba(0,0,0,${b.dataset.ov})`; dots();
 });
+
 document.getElementById('mountGrid').addEventListener('click',e=>{
   const b=e.target.closest('.mbtn'); if(!b)return;
-  document.querySelectorAll('.mbtn').forEach(x=>x.classList.remove('on'));
-  b.classList.add('on'); S.mount=b.dataset.m;
-  if(S.mount==='libre' && S.backing) drawAcrylic();
+  document.querySelectorAll('.mbtn').forEach(x=>x.classList.remove('on')); b.classList.add('on'); S.mount=b.dataset.m;
+  const mountHasPlate=['acrilico-cuadrado','acrilico-redondo','colgar'].includes(S.mount);
+  if(mountHasPlate && S.backing){
+    S.backing=false; document.getElementById('tBacking').checked=false; acrylicCvs.style.opacity='0';
+  }
   applyMount(); dots();
 });
 
 document.getElementById('tBacking').addEventListener('change',function(){
   S.backing=this.checked;
   if(S.backing){
-    if(S.mount!=='libre'){
-      S.mount='libre';
-      document.querySelectorAll('.mbtn').forEach(x=>x.classList.remove('on'));
+    if(['acrilico-cuadrado','acrilico-redondo','colgar'].includes(S.mount)){
+      S.mount='libre'; document.querySelectorAll('.mbtn').forEach(x=>x.classList.remove('on'));
       document.querySelector('.mbtn[data-m="libre"]').classList.add('on');
-      mountPlate.style.cssText=''; mountHook.style.display='none';
-      mountBase.style.display='none'; mountScrews.style.display='none';
+      mountPlate.style.cssText=''; mountPlate.style.opacity='0'; mountHook.style.display='none';
     }
     drawAcrylic();
-  } else {
-    acrylicCvs.style.opacity='0';
-  }
+  } else { acrylicCvs.style.opacity='0'; }
   dots();
 });
 document.getElementById('tRgb').addEventListener('change',function(){ S.rgb=this.checked; this.checked?startRGB():stopRGB(); dots(); });
 document.getElementById('tFlicker').addEventListener('change',function(){ S.flicker=this.checked; neonEl.classList.toggle('flicker',this.checked); dots(); });
 document.getElementById('tDimmer').addEventListener('change',function(){ S.dimmer=this.checked; neonEl.classList.toggle('dimmed',this.checked); dots(); });
-
 document.getElementById('tPower').addEventListener('change',function(){
   S.power=this.checked;
   if(this.checked){ renderNeon(); neonEl.classList.toggle('flicker',S.flicker); neonEl.classList.toggle('dimmed',S.dimmer); }
-  else { neonEl.style.color='#5a5a5a'; neonEl.style.textShadow='none'; neonEl.classList.remove('flicker','dimmed'); if(S.backing)drawAcrylic(); }
+  else { neonEl.style.color='#5a5a5a'; neonEl.style.textShadow='none'; neonEl.classList.remove('flicker','dimmed'); if(S.backing)drawAcrylic(); applyMount(); }
 });
 
-function toggleFlicker(){
-  const t=document.getElementById('tFlicker');
-  t.checked=!t.checked; S.flicker=t.checked; neonEl.classList.toggle('flicker',t.checked); dots();
-}
-
-// ════════════════════════════════════════
-// RAIN
-// ════════════════════════════════════════
-let rainAF=null;
-const drops=[];
-function initRain(){
-  const w=previewCanvas.offsetWidth,h=previewCanvas.offsetHeight;
-  rainCvs.width=w; rainCvs.height=h; drops.length=0;
-  for(let i=0;i<120;i++) drops.push({x:Math.random()*w,y:Math.random()*h,len:8+Math.random()*14,speed:6+Math.random()*8,op:.15+Math.random()*.35});
-}
-function drawRain(){
-  const w=rainCvs.width,h=rainCvs.height;
-  rainCtx.clearRect(0,0,w,h); rainCtx.strokeStyle='rgba(180,220,255,.55)'; rainCtx.lineWidth=1;
-  drops.forEach(d=>{
-    rainCtx.globalAlpha=d.op; rainCtx.beginPath(); rainCtx.moveTo(d.x,d.y); rainCtx.lineTo(d.x+d.len*.18,d.y+d.len); rainCtx.stroke();
-    d.y+=d.speed; d.x+=d.speed*.18; if(d.y>h){d.y=-d.len;d.x=Math.random()*w;}
-  });
-  rainCtx.globalAlpha=1;
-}
-function startRain(){ initRain(); (function loop(){ drawRain(); rainAF=requestAnimationFrame(loop); })(); }
-function stopRain(){ cancelAnimationFrame(rainAF); rainCtx.clearRect(0,0,rainCvs.width,rainCvs.height); }
-
-// ════════════════════════════════════════
-// DOWNLOAD
-// ════════════════════════════════════════
-function downloadPreview(){
-  const cvs=document.createElement('canvas'); cvs.width=1400; cvs.height=700;
-  const ctx=cvs.getContext('2d');
-  ctx.fillStyle='#111'; ctx.fillRect(0,0,1400,700);
-  const lines=S.text.split('\n'), mx=Math.max(...lines.map(l=>l.length),1);
-  const fs=Math.max(44,Math.min(180,900/mx));
-  ctx.font=`${fs}px '${S.font}'`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle=S.color;
-  const lh=fs*1.3, sy=350-((lines.length-1)*lh)/2;
-  lines.forEach((ln,i)=>{ ctx.shadowColor=S.color; for(let g=0;g<5;g++){ctx.shadowBlur=18*(g+1);ctx.fillText(ln,700,sy+i*lh);} });
-  const a=document.createElement('a'); a.download='mi-neon.png'; a.href=cvs.toDataURL(); a.click();
-}
-
-function shareDesign(){
-  const p=new URLSearchParams({t:S.text,f:S.font,c:S.color});
-  const url=location.href.split('?')[0]+'?'+p;
-  navigator.clipboard.writeText(url).then(()=>{
-    const b=document.getElementById('btnShare');
-    b.textContent='✓ ¡Copiado!';
-    setTimeout(()=>b.innerHTML='🔗 <span class="btn-text">Compartir</span>',2500);
-  });
-}
-
-// ════════════════════════════════════════
-// DOTS
-// ════════════════════════════════════════
+// ── Dots ──
 function dots(){
-  const checks=[
-    S.text.trim().length>0, S.font!=='Pacifico', S.color!=='#b3f0ff',
-    !!document.querySelector('.wbtn.on:not(:first-child)'),
-    S.mount!=='libre',
-    S.backing||S.rgb||S.flicker||S.dimmer,
-  ];
+  const checks=[S.text.trim().length>0,S.font!=='Pacifico',S.color!=='#b3f0ff',!!document.querySelector('.wbtn.on:not(:first-child)'),S.mount!=='libre',S.backing||S.rgb||S.flicker||S.dimmer];
   checks.forEach((ok,i)=>document.getElementById('d'+(i+1)).classList.toggle('on',ok));
   document.getElementById('d1').classList.add('on');
 }
 
-// ════════════════════════════════════════
-// MOBILE SHEET
-// ════════════════════════════════════════
+// ── Mobile sheet ──
 const isMobile=()=>window.innerWidth<=768;
 const SHEET_COLLAPSED=52, SHEET_HALF=220, SHEET_FULL=380;
 let sheetH=SHEET_COLLAPSED, sheetOpen=false;
-
 function initMobileSheet(){
-  if(!isMobile()) return;
-  const handle=document.getElementById('sheetHandle');
-  const tabsEl=document.getElementById('sheetTabs');
-  const blocks=document.querySelectorAll('.block[data-tab]');
-  const sh=document.getElementById('scrollHint');
+  if(!isMobile())return;
+  const handle=document.getElementById('sheetHandle'), tabsEl=document.getElementById('sheetTabs');
+  const blocks=document.querySelectorAll('.block[data-tab]'), sh=document.getElementById('scrollHint');
   handle.style.display='flex'; tabsEl.style.display='flex';
-  if(sh) sh.textContent='✌️ Pellizca para redimensionar';
+  if(sh)sh.textContent='✌️ Pellizca para redimensionar';
   tabsEl.innerHTML='';
-  blocks.forEach((b,i)=>{
-    const btn=document.createElement('button');
-    btn.className='stab'+(i===0?' on':'');
-    btn.textContent=b.dataset.tab;
-    btn.addEventListener('click',()=>switchTab(i));
-    tabsEl.appendChild(btn);
-  });
+  blocks.forEach((b,i)=>{ const btn=document.createElement('button'); btn.className='stab'+(i===0?' on':''); btn.textContent=b.dataset.tab; btn.addEventListener('click',()=>switchTab(i)); tabsEl.appendChild(btn); });
   switchTab(0);
-  if(handle._init) return; handle._init=true;
+  if(handle._init)return; handle._init=true;
   handle.addEventListener('click',()=>{ sheetOpen=!sheetOpen; setSheetHeight(sheetOpen?SHEET_HALF:SHEET_COLLAPSED); });
   let sheetDragStartY=0, sheetHAtStart=0, sheetDragging=false;
   handle.addEventListener('pointerdown',e=>{ sheetDragging=true; sheetDragStartY=e.clientY; sheetHAtStart=sheetH; handle.setPointerCapture(e.pointerId); e.stopPropagation(); });
   handle.addEventListener('pointermove',e=>{ if(!sheetDragging)return; setSheetHeight(Math.max(SHEET_COLLAPSED,Math.min(SHEET_FULL,sheetHAtStart+(sheetDragStartY-e.clientY))),false); });
   handle.addEventListener('pointerup',()=>{ sheetDragging=false; const snaps=[SHEET_COLLAPSED,SHEET_HALF,SHEET_FULL]; const cl=snaps.reduce((a,b)=>Math.abs(b-sheetH)<Math.abs(a-sheetH)?b:a); setSheetHeight(cl); sheetOpen=cl>SHEET_COLLAPSED; });
 }
+function setSheetHeight(h,animate=true){ sheetH=h; const sb=document.getElementById('sidebar'); sb.style.transition=animate?'height .3s cubic-bezier(.4,0,.2,1)':'none'; sb.style.height=h+'px'; }
+function switchTab(idx){ document.querySelectorAll('.block[data-tab]').forEach((b,i)=>b.classList.toggle('active',i===idx)); document.querySelectorAll('.stab').forEach((t,i)=>t.classList.toggle('on',i===idx)); if(isMobile()&&sheetH<SHEET_HALF){setSheetHeight(SHEET_HALF);sheetOpen=true;} }
 
-function setSheetHeight(h,animate=true){
-  sheetH=h;
-  const sb=document.getElementById('sidebar');
-  sb.style.transition=animate?'height .3s cubic-bezier(.4,0,.2,1)':'none';
-  sb.style.height=h+'px';
-}
-function switchTab(idx){
-  document.querySelectorAll('.block[data-tab]').forEach((b,i)=>b.classList.toggle('active',i===idx));
-  document.querySelectorAll('.stab').forEach((t,i)=>t.classList.toggle('on',i===idx));
-  if(isMobile()&&sheetH<SHEET_HALF){setSheetHeight(SHEET_HALF);sheetOpen=true;}
-}
-
-// ════════════════════════════════════════
-// PREVIEW MODE — con escala proporcional al canvas
-// ════════════════════════════════════════
-const btnPreview = document.getElementById('btnPreview');
-let previewActive = false;
-// Snapshot del estado antes de entrar al preview
-let previewSnapshot = null;
-
-btnPreview.addEventListener('click', (e) => {
-  e.stopPropagation();
-  if (previewActive) return;
-
-  // Medir el canvas con precisión subpíxel ANTES de activar preview-mode
-  const rectBefore = previewCanvas.getBoundingClientRect();
-
-  previewActive = true;
-  document.body.classList.add('preview-mode');
-
-  // Esperar que el browser complete el reflow del nuevo layout
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      const rectAfter = previewCanvas.getBoundingClientRect();
-
-      // Ratio independiente por eje
-      const ratioW = rectAfter.width  / (rectBefore.width  || 1);
-      const ratioH = rectAfter.height / (rectBefore.height || 1);
-
-      // El fondo usa background-size:cover → escala por el eje que MÁS creció.
-      // El letrero tiene que seguir la misma lógica para mantenerse en proporción.
-      const ratio = Math.max(ratioW, ratioH);
-
-      // Guardar estado para restaurar al salir
-      previewSnapshot = {
-        scale: S.scale,
-        posX:  S.posX,
-        posY:  S.posY,
-      };
-
-      // Aplicar el mismo factor de escala al letrero y a su posición
-      S.scale = S.scale * ratio;
-      S.posX  = S.posX  * ratioW;   // posición X escala por el ratio del eje X
-      S.posY  = S.posY  * ratioH;   // posición Y escala por el ratio del eje Y
-      applyTransform();
-      updateDimBadge();
-    });
-  });
-
-  document.addEventListener('click', exitPreview);
+// ── Preview mode ──
+const btnPreview=document.getElementById('btnPreview');
+let previewActive=false, previewSnapshot=null;
+btnPreview.addEventListener('click',e=>{
+  e.stopPropagation(); if(previewActive)return;
+  const rectBefore=previewCanvas.getBoundingClientRect();
+  previewActive=true; document.body.classList.add('preview-mode');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const rectAfter=previewCanvas.getBoundingClientRect();
+    const ratioW=rectAfter.width/(rectBefore.width||1), ratioH=rectAfter.height/(rectBefore.height||1), ratio=Math.max(ratioW,ratioH);
+    previewSnapshot={scale:S.scale,posX:S.posX,posY:S.posY};
+    S.scale*=ratio; S.posX*=ratioW; S.posY*=ratioH; renderNeon(); updateDimBadge();
+  }));
+  document.addEventListener('click',exitPreview);
 });
-
-function exitPreview() {
-  if (!previewActive) return;
-  previewActive = false;
-  document.body.classList.remove('preview-mode');
-  document.removeEventListener('click', exitPreview);
-
-  // Restaurar escala y posición exactas antes del preview
-  if (previewSnapshot) {
-    S.scale = previewSnapshot.scale;
-    S.posX  = previewSnapshot.posX;
-    S.posY  = previewSnapshot.posY;
-    previewSnapshot = null;
-    applyTransform();
-    updateDimBadge();
-  }
+function exitPreview(){
+  if(!previewActive)return; previewActive=false; document.body.classList.remove('preview-mode');
+  document.removeEventListener('click',exitPreview);
+  if(previewSnapshot){ S.scale=previewSnapshot.scale; S.posX=previewSnapshot.posX; S.posY=previewSnapshot.posY; previewSnapshot=null; renderNeon(); updateDimBadge(); }
 }
 
-// ════════════════════════════════════════
-// URL PARAMS
-// ════════════════════════════════════════
-(function(){
-  const p=new URLSearchParams(location.search);
-  if(p.get('t')){S.text=p.get('t');document.getElementById('textInput').value=S.text;}
-  if(p.get('f')) S.font=p.get('f');
-  if(p.get('c')) S.color=p.get('c');
-})();
+// ── URL params ──
+(function(){ const p=new URLSearchParams(location.search); if(p.get('t')){S.text=p.get('t');document.getElementById('textInput').value=S.text;} if(p.get('f'))S.font=p.get('f'); if(p.get('c'))S.color=p.get('c'); })();
 
-// ════════════════════════════════════════
-// RESIZE OBSERVER — solo actualiza posición/transform
-// ════════════════════════════════════════
-if(window.ResizeObserver){
-  new ResizeObserver(()=> applyTransform()).observe(previewCanvas);
-}
+if(window.ResizeObserver){ new ResizeObserver(()=>renderNeon()).observe(previewCanvas); }
 
-// ════════════════════════════════════════
-// WINDOW RESIZE
-// ════════════════════════════════════════
 window.addEventListener('resize',()=>{
-  if(isMobile()){
-    initMobileSheet();
-  } else {
-    const sb=document.getElementById('sidebar');
-    sb.style.height=''; sb.style.transition='';
-    document.querySelectorAll('.block').forEach(b=>{b.style.display='';b.classList.remove('active');});
-    document.getElementById('sheetHandle').style.display='none';
-    document.getElementById('sheetTabs').style.display='none';
-  }
-  applyTransform();
+  if(isMobile()){ initMobileSheet(); }
+  else { const sb=document.getElementById('sidebar'); sb.style.height=''; sb.style.transition=''; document.querySelectorAll('.block').forEach(b=>{b.style.display='';b.classList.remove('active');}); document.getElementById('sheetHandle').style.display='none'; document.getElementById('sheetTabs').style.display='none'; }
+  renderNeon();
 });
 
-// ════════════════════════════════════════
-// INIT
-// ════════════════════════════════════════
-recalcFontSize();
-scheduleHint();
-applyMount();
-dots();
-initMobileSheet();
+// ── Init ──
+recalcFontSize(); scheduleHint(); dots(); initMobileSheet();
 </script>
 </body>
 </html>
