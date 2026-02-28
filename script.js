@@ -46,140 +46,160 @@ function startRGB(){
 }
 function stopRGB(){ clearInterval(rgbInt); currentRGBColor=RGB_COLORS[0]; renderNeon(); }
 
-// ── Acrylic ──
-// ── Acrílico — síncrono, sin Worker, sin desfase ──
-// El canvas cubre todo signContent (mismas coords que neonEl).
-// strokeText grueso rellena huecos y conecta letras; threshold limpia el borde.
+// ── Acrylic ──────────────────────────────────────────────────────
+// Usa getBoundingClientRect() de cada span para leer la posición
+// EXACTA que el DOM ya calculó — cero heurísticas de baseline.
+// Los rects se pintan en un canvas offscreen → dilate → erode.
+// El resultado se acopla perfectamente a cualquier tipografía.
+
 let acrylicRaf = null;
 
 function drawAcrylic(){
   if(!S.backing){ acrylicCvs.style.opacity='0'; return; }
   cancelAnimationFrame(acrylicRaf);
-  acrylicRaf = requestAnimationFrame(()=>_renderAcrylic());
+  acrylicRaf = requestAnimationFrame(()=> requestAnimationFrame(()=> _renderAcrylic()));
+}
+
+function _dilate(src,w,h,r){
+  const tmp=new Uint8Array(w*h),dst=new Uint8Array(w*h);
+  for(let y=0;y<h;y++){
+    const b=y*w;
+    for(let x=0;x<w;x++){
+      const x0=Math.max(0,x-r),x1=Math.min(w-1,x+r);
+      let v=0;for(let k=x0;k<=x1;k++)if(src[b+k]){v=255;break;}
+      tmp[b+x]=v;
+    }
+  }
+  for(let x=0;x<w;x++){
+    for(let y=0;y<h;y++){
+      const y0=Math.max(0,y-r),y1=Math.min(h-1,y+r);
+      let v=0;for(let k=y0;k<=y1;k++)if(tmp[k*w+x]){v=255;break;}
+      dst[y*w+x]=v;
+    }
+  }
+  return dst;
+}
+
+function _erode(src,w,h,r){
+  const tmp=new Uint8Array(w*h),dst=new Uint8Array(w*h);
+  for(let y=0;y<h;y++){
+    const b=y*w;
+    for(let x=0;x<w;x++){
+      const x0=Math.max(0,x-r),x1=Math.min(w-1,x+r);
+      let v=255;for(let k=x0;k<=x1;k++)if(!src[b+k]){v=0;break;}
+      tmp[b+x]=v;
+    }
+  }
+  for(let x=0;x<w;x++){
+    for(let y=0;y<h;y++){
+      const y0=Math.max(0,y-r),y1=Math.min(h-1,y+r);
+      let v=255;for(let k=y0;k<=y1;k++)if(!tmp[k*w+x]){v=0;break;}
+      dst[y*w+x]=v;
+    }
+  }
+  return dst;
 }
 
 function _renderAcrylic(){
   if(!S.backing){ acrylicCvs.style.opacity='0'; return; }
 
-  const nW = neonEl.offsetWidth;
-  const nH = neonEl.offsetHeight;
-
-  const pad = 30; 
-  const scW = nW + pad * 2;
-  const scH = nH + pad * 2;
-
-  acrylicCvs.width = scW;
-  acrylicCvs.height = scH;
-
-  acrylicCvs.style.cssText = `position:absolute;left:${neonEl.offsetLeft - pad}px;top:${neonEl.offsetTop - pad}px;width:${scW}px;height:${scH}px;z-index:2;pointer-events:none;opacity:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3)) drop-shadow(0 0 1px rgba(255,255,255,0.6));`;
-
-  const ctx = acrylicCtx;
-  ctx.clearRect(0,0,scW,scH);
-
-  const fs = getCurrentFS();
-  
-  // =========================================================
-  // --- TU MEDIDA INTOCABLE DE DESFASE VERTICAL ---
-  // =========================================================
-  const verticalOffset = fs * 0.02; 
-  
+  const fs    = getCurrentFS();
   const spans = neonEl.querySelectorAll('.nchar');
+  if(!spans.length) return;
 
-  // =========================================================
-  // --- ANDAMIAJE INTELIGENTE (VALORES MEJORADOS) ---
-  // Rellena huecos con precisión anatómica según la letra
-  // =========================================================
-  ctx.fillStyle = '#fff';
+  // getBoundingClientRect del neonEl = origen de referencia en viewport
+  const neonRect = neonEl.getBoundingClientRect();
+  const parentRect = signContent.getBoundingClientRect();
 
-  const words = [];
-  let currentWord = [];
-  spans.forEach(span => {
-    if(span.textContent === ' ' || span.textContent === '\u00A0' || span.textContent === '\n') {
-      if(currentWord.length > 0) words.push(currentWord);
-      currentWord = [];
+  const dilateR = Math.max(5, Math.round(fs * 0.09));
+  const erodeR  = Math.max(2, Math.round(fs * 0.04));
+  const pad     = dilateR + 6;
+
+  octx.font = `${fs}px ${S.font}, cursive`;
+
+  const metrics = octx.measureText(S.text || ' ');
+  const textW = metrics.width;
+  const textH = fs * (S.text.split('\n').length) * 1.2;
+
+  const cW = Math.ceil(textW) + pad * 2;
+  const cH = Math.ceil(textH) + pad * 2;
+
+  // ── Pintar rects DOM en canvas offscreen ─────────────────────
+  // Cada span tiene su rect exacto en viewport.
+  // Lo restamos del rect de neonEl → coordenadas relativas al texto.
+  // Añadimos pad → coordenadas dentro del canvas.
+  const off = document.createElement('canvas');
+  off.width = cW; off.height = cH;
+  const octx = off.getContext('2d');
+  octx.fillStyle = '#fff';
+
+    // ── Pintar TEXTO REAL en canvas offscreen ─────────────────────
+    octx.textBaseline = 'top';
+    octx.textAlign = 'left';
+
+    octx.font = `${fs}px ${S.font}, cursive`;
+
+    const lines = (S.text || ' ').split('\n');
+    let y = pad;
+
+    for(let i = 0; i < lines.length; i++){
+    octx.fillText(lines[i], pad, y);
+    y += fs * 1.2;
+    }
+
+  // ── Alpha binario → dilate → erode ───────────────────────────
+  const id  = octx.getImageData(0, 0, cW, cH);
+  const src = new Uint8Array(cW * cH);
+  for(let i = 0; i < src.length; i++) src[i] = id.data[i*4+3] > 10 ? 255 : 0;
+
+  const dilated = _dilate(src, cW, cH, dilateR);
+  const result  = _erode(dilated, cW, cH, erodeR);
+
+  // ── Borde Fresnel ─────────────────────────────────────────────
+  const border = new Uint8Array(cW * cH);
+  for(let y = 1; y < cH-1; y++){
+    for(let x = 1; x < cW-1; x++){
+      const i = y*cW + x;
+      if(result[i] && (!result[i-1]||!result[i+1]||!result[i-cW]||!result[i+cW]))
+        border[i] = 1;
+    }
+  }
+
+  // ── Posicionar canvas en signContent ─────────────────────────
+  // acrylicCvs es hermano de neonEl dentro de signContent.
+  // Usamos offsetLeft/Top de neonEl dentro de signContent (sin viewport).
+  acrylicCvs.width  = cW;
+  acrylicCvs.height = cH;
+  acrylicCvs.style.cssText = [
+    'position:absolute',
+    `left:${-pad}px`,
+    `top:${-pad}px`,
+    `width:${cW}px`,
+    `height:${cH}px`,
+    'z-index:2',
+    'pointer-events:none',
+    'opacity:1',
+    ].join(';') + ';';
+
+  // ── Pintar acrílico ───────────────────────────────────────────
+  const out = acrylicCtx.createImageData(cW, cH);
+  const nr  = hexToRgb(S.rgb ? currentRGBColor : S.color);
+
+  for(let i = 0; i < result.length; i++){
+    if(!result[i]) continue;
+    const px = i * 4;
+    const gx = (i % cW) / cW, gy = Math.floor(i / cW) / cH;
+    if(border[i]){
+      out.data[px]=255; out.data[px+1]=255; out.data[px+2]=255; out.data[px+3]=238;
     } else {
-      currentWord.push(span);
+      const t=0.09, lm=0.77+(gx+gy)*0.07;
+      out.data[px]  =Math.min(255,Math.round((230*(1-t)+nr.r*t)*lm));
+      out.data[px+1]=Math.min(255,Math.round((238*(1-t)+nr.g*t)*lm));
+      out.data[px+2]=Math.min(255,Math.round((250*(1-t)+nr.b*t)*lm));
+      out.data[px+3]=168;
     }
-  });
-  if(currentWord.length > 0) words.push(currentWord);
-
-  words.forEach(word => {
-    const validSpans = word.filter(s => /[a-zA-Z0-9ÁÉÍÓÚáéíóúÑñ]/.test(s.textContent));
-    if (validSpans.length === 0) return;
-
-    const firstSpan = validSpans[0];
-    const lastSpan = validSpans[validSpans.length - 1];
-
-    const getSpanCenter = (span) => pad + span.offsetLeft + span.offsetWidth / 2;
-    const startX = getSpanCenter(firstSpan);
-    const endX = getSpanCenter(lastSpan);
-    const baseY = pad + firstSpan.offsetTop + (firstSpan.offsetHeight * 0.76) - verticalOffset;
-    
-    // PUENTE HORIZONTAL: Ahora es más grueso (fs * 0.38) para amarrar mejor las letras
-    if (validSpans.length > 1) {
-        ctx.fillRect(startX, baseY - fs * 0.40, endX - startX, fs * 0.38);
-    }
-
-    validSpans.forEach(span => {
-        const cx = getSpanCenter(span);
-        const sy = pad + span.offsetTop + (span.offsetHeight * 0.76) - verticalOffset;
-        const text = span.textContent;
-        
-        const isUpper = text === text.toUpperCase() && /[A-ZÁÉÍÓÚÑ]/.test(text);
-        const hasAscender = /[bdfhklti]/.test(text.toLowerCase());
-        const hasDescender = /[gjpqyç]/.test(text.toLowerCase());
-        
-        // Cubre más ancho (55%) sin salir de las curvas laterales
-        const pWidth = span.offsetWidth * 0.55;
-        
-        // 1. CUERPO CENTRAL: Tapamos la barriga de todas las letras (a, e, o, m, n...)
-        ctx.fillRect(cx - pWidth/2, sy - fs * 0.45, pWidth, fs * 0.45);
-        
-        // 2. ASCENDENTES / MAYÚSCULAS: Rellenamos hacia arriba (H, W, l, k, t...)
-        if (isUpper || hasAscender) {
-            // Un poco más angosto (80% de pWidth) en la parte superior para evitar esquinas cuadradas en letras curvas
-            ctx.fillRect(cx - (pWidth * 0.9)/2, sy - fs * 0.80, pWidth * 0.95, fs * 0.50);
-        }
-
-        // 3. DESCENDENTES: Rellenamos hacia abajo (g, j, p, y, q...)
-        if (hasDescender) {
-            ctx.fillRect(cx - (pWidth * 0.8)/2, sy, pWidth * 0.8, fs * 0.30);
-        }
-    });
-  });
-
-  // =========================================================
-  // --- TU MEDIDA INTOCABLE DE GROSOR (Borde elegante) ---
-  // =========================================================
-  ctx.lineWidth = fs * 0.10; 
-  ctx.strokeStyle = '#fff';
-  ctx.textBaseline = 'alphabetic';
-  ctx.lineJoin = 'round';
-  ctx.lineCap = 'round';
-
-  spans.forEach(span => {
-    const sFont = span.style.fontFamily || `'${S.font}', cursive`;
-    ctx.font = `${fs}px ${sFont}`;
-
-    const x = pad + span.offsetLeft;
-    const y = pad + span.offsetTop + (span.offsetHeight * 0.76) - verticalOffset;
-
-    ctx.strokeText(span.textContent, x, y);
-    ctx.fillText(span.textContent, x, y);
-  });
-
-  // 2. APLICAR TEXTURA DE CRISTAL
-  ctx.globalCompositeOperation = 'source-in';
-  
-  const grad = ctx.createLinearGradient(0, 0, scW, scH);
-  grad.addColorStop(0,   'rgba(240, 248, 255, 0.2)');
-  grad.addColorStop(0.5, 'rgba(215, 230, 250, 0.1)');
-  grad.addColorStop(1,   'rgba(225, 240, 255, 0.18)');
-  
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, scW, scH);
-
-  ctx.globalCompositeOperation = 'source-over';
+  }
+  acrylicCtx.putImageData(out, 0, 0);
 }
 
 function hexToRgb(hex){ return {r:parseInt(hex.slice(1,3),16),g:parseInt(hex.slice(3,5),16),b:parseInt(hex.slice(5,7),16)}; }
@@ -235,6 +255,7 @@ function renderNeon(){
   posWrapper.style.transform = `translate(calc(-50% + ${S.posX}px), calc(-50% + ${S.posY}px))`;
   signWrapper.style.transform = `rotate(${S.rotation}deg)`;
   signContent.style.transform = `rotateY(${S.tiltY}deg)`;
+  signContent.style.position = 'relative';
 
   if(!S.power){
     neonEl.style.color='#5a5a5a';
@@ -252,6 +273,9 @@ function renderNeon(){
 
   buildNeonSpans();
   applyMount();
+  if(S.backing){
+    drawAcrylic();
+  }
 }
 
 function updateDimBadge(){
@@ -498,6 +522,7 @@ btnPreview.addEventListener('click',e=>{
     const ratioW=rectAfter.width/(rectBefore.width||1), ratioH=rectAfter.height/(rectBefore.height||1), ratio=Math.max(ratioW,ratioH);
     previewSnapshot={scale:S.scale,posX:S.posX,posY:S.posY};
     S.scale*=ratio; S.posX*=ratioW; S.posY*=ratioH; renderNeon(); updateDimBadge();
+    if(S.backing) drawAcrylic();
   }));
   document.addEventListener('click',exitPreview);
 });
@@ -505,6 +530,7 @@ function exitPreview(){
   if(!previewActive)return; previewActive=false; document.body.classList.remove('preview-mode');
   document.removeEventListener('click',exitPreview);
   if(previewSnapshot){ S.scale=previewSnapshot.scale; S.posX=previewSnapshot.posX; S.posY=previewSnapshot.posY; previewSnapshot=null; renderNeon(); updateDimBadge(); }
+  if(S.backing) drawAcrylic();
 }
 
 // ── URL params ──
