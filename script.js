@@ -42,15 +42,15 @@ function startRGB(){
     neonEl.style.color=currentRGBColor;
     neonEl.style.textShadow=tubeShadow(currentRGBColor);
     neonEl.style.webkitTextStroke=tubeStroke(currentRGBColor);
+    if(S.backing) drawAcrylic();
   },700);
 }
 function stopRGB(){ clearInterval(rgbInt); currentRGBColor=RGB_COLORS[0]; renderNeon(); }
 
 // ── Acrylic ──────────────────────────────────────────────────────
-// Usa getBoundingClientRect() de cada span para leer la posición
-// EXACTA que el DOM ya calculó — cero heurísticas de baseline.
-// Los rects se pintan en un canvas offscreen → dilate → erode.
-// El resultado se acopla perfectamente a cualquier tipografía.
+// Renders each glyph to an offscreen canvas using span positions from the DOM
+// to build a pixel-exact text mask. Then applies dilate→subtract morphology
+// to produce a thin contour ring — the acrylic cut shape around the lettering.
 
 let acrylicRaf = null;
 
@@ -59,6 +59,8 @@ function drawAcrylic(){
   cancelAnimationFrame(acrylicRaf);
   acrylicRaf = requestAnimationFrame(()=> requestAnimationFrame(()=> _renderAcrylic()));
 }
+
+// ── Morphology helpers ──────────────────────────────────────────
 
 function _dilate(src,w,h,r){
   const tmp=new Uint8Array(w*h),dst=new Uint8Array(w*h);
@@ -100,107 +102,193 @@ function _erode(src,w,h,r){
   return dst;
 }
 
+// ── Core acrylic renderer ───────────────────────────────────────
+//
+// Strategy: render every glyph onto an offscreen canvas using the exact
+// font/size and baseline position derived from DOM measurements.
+// fontBoundingBoxAscent (CSS line ascent) tells us exactly where the browser
+// places the baseline relative to the top of the line box — this eliminates
+// the vertical offset that plagued the previous approach.
+//
+// From the resulting alpha mask we compute:
+//   outer  = mask dilated by MARGIN  →  outer acrylic edge
+//   solid  = mask + small inset      →  the region the text sits in
+//   panel  = outer filled solid      →  full acrylic panel shape
+//   ring   = outer − solid           →  thin border strip (optional visual)
+//
+// The acrylic is painted as frosted clear material: white + transparency only,
+// no neon colour, with an edge highlight and a drop shadow.
+
 function _renderAcrylic(){
   if(!S.backing){ acrylicCvs.style.opacity='0'; return; }
 
+  const neonRect   = neonEl.getBoundingClientRect();
+  const parentRect = signContent.getBoundingClientRect();
+  // Morphology constants — defined early so PAD can depend on them
+  const MARGIN       = 16; // physical acrylic thickness (px beyond glyph)
+  const MERGE_RADIUS = 40; // detection range for merging nearby letters
+  const SMOOTH       = 4;  // open/close radius for corner rounding
+  // PAD must always exceed the largest dilate radius used, or the mask
+  // hits the canvas boundary and clips into a straight rectangular edge.
+  const PAD = MERGE_RADIUS + SMOOTH + 8;
+  const w   = Math.ceil(neonRect.width)  + PAD*2;
+  const h   = Math.ceil(neonRect.height) + PAD*2;
+  if(w < 4 || h < 4) return;
+
+  // Position canvas: shift left/up by PAD so extra room is symmetric
+  acrylicCvs.width  = w;
+  acrylicCvs.height = h;
+  acrylicCvs.style.position      = 'absolute';
+  acrylicCvs.style.left          = (neonRect.left - parentRect.left - PAD) + 'px';
+  acrylicCvs.style.top           = (neonRect.top  - parentRect.top  - PAD) + 'px';
+  acrylicCvs.style.pointerEvents = 'none';
+  acrylicCvs.style.zIndex        = '2';
+  acrylicCvs.style.opacity       = '1';
+  acrylicCvs.style.filter        = 'none';
+
+  // ── Step 1: render glyphs onto offscreen canvas → alpha mask ──────────
+  // We use fontBoundingBoxAscent with textBaseline='alphabetic' so the
+  // baseline lands in exactly the same place the browser chose for each span.
+  const off    = document.createElement('canvas');
+  off.width    = w;
+  off.height   = h;
+  const offCtx = off.getContext('2d');
+  offCtx.fillStyle = '#fff';
+
   const fs    = getCurrentFS();
   const spans = neonEl.querySelectorAll('.nchar');
-  if(!spans.length) return;
 
-  // getBoundingClientRect del neonEl = origen de referencia en viewport
-  const neonRect = neonEl.getBoundingClientRect();
-  const parentRect = signContent.getBoundingClientRect();
+  spans.forEach(sp => {
+    const sr  = sp.getBoundingClientRect();
+    const idx = parseInt(sp.dataset.idx);
+    const ov  = S.charOverrides[idx] || {};
+    const ch  = sp.textContent === '\u00A0' ? ' ' : sp.textContent;
 
-  const dilateR = Math.max(5, Math.round(fs * 0.09));
-  const erodeR  = Math.max(2, Math.round(fs * 0.04));
-  const pad     = dilateR + 6;
+    offCtx.font         = `${fs}px '${ov.font || S.font}', cursive`;
+    offCtx.textBaseline = 'alphabetic';
 
-  octx.font = `${fs}px ${S.font}, cursive`;
+    const m  = offCtx.measureText(ch);
+    // fontBoundingBoxAscent = CSS ascent used by the browser for line-box layout
+    const asc = m.fontBoundingBoxAscent !== undefined
+      ? m.fontBoundingBoxAscent
+      : m.actualBoundingBoxAscent;
 
-  const metrics = octx.measureText(S.text || ' ');
-  const textW = metrics.width;
-  const textH = fs * (S.text.split('\n').length) * 1.2;
+    const x = (sr.left - neonRect.left) + PAD;
+    const y = (sr.top  - neonRect.top)  + PAD + asc;
 
-  const cW = Math.ceil(textW) + pad * 2;
-  const cH = Math.ceil(textH) + pad * 2;
+    offCtx.fillText(ch, x, y);
+  });
 
-  // ── Pintar rects DOM en canvas offscreen ─────────────────────
-  // Cada span tiene su rect exacto en viewport.
-  // Lo restamos del rect de neonEl → coordenadas relativas al texto.
-  // Añadimos pad → coordenadas dentro del canvas.
-  const off = document.createElement('canvas');
-  off.width = cW; off.height = cH;
-  const octx = off.getContext('2d');
-  octx.fillStyle = '#fff';
+  const raw  = offCtx.getImageData(0, 0, w, h);
+  const mask = new Uint8Array(w * h);
+  for(let i = 0; i < w * h; i++) mask[i] = raw.data[i*4+3] > 20 ? 255 : 0;
 
-    // ── Pintar TEXTO REAL en canvas offscreen ─────────────────────
-    octx.textBaseline = 'top';
-    octx.textAlign = 'left';
+  // ── Step 2: morphology ────────────────────────────────────────────────
+  // MARGIN, MERGE_RADIUS, SMOOTH are declared above near PAD.
+  //
+  // Dilate by MERGE_RADIUS to pull together letters that are close,
+  // then erode back by (MERGE_RADIUS - MARGIN) to restore the physical
+  // thickness to MARGIN px — detection range and size are now independent.
 
-    octx.font = `${fs}px ${S.font}, cursive`;
+  // outer shape: large dilate (merge) → erode back to physical size → smooth
+  const outerLarge = _dilate(mask, w, h, MERGE_RADIUS);
+  const outerRaw   = _erode(outerLarge, w, h, MERGE_RADIUS - MARGIN);
+  const outer      = _erode(_dilate(outerRaw, w, h, SMOOTH), w, h, SMOOTH);
 
-    const lines = (S.text || ' ').split('\n');
-    let y = pad;
+  // inner cutout: glyph area (letters show through)
+  const inner = _dilate(mask, w, h, 1);
 
-    for(let i = 0; i < lines.length; i++){
-    octx.fillText(lines[i], pad, y);
-    y += fs * 1.2;
-    }
+  // full acrylic panel = outer shape
+  // transparent hole   = inner (where the neon tube lives)
 
-  // ── Alpha binario → dilate → erode ───────────────────────────
-  const id  = octx.getImageData(0, 0, cW, cH);
-  const src = new Uint8Array(cW * cH);
-  for(let i = 0; i < src.length; i++) src[i] = id.data[i*4+3] > 10 ? 255 : 0;
+  // ── Step 3: paint acrylic layers ─────────────────────────────────────
+  // ── Step 3: paint all acrylic layers into one ImageData in a single pass ──
+  // putImageData() replaces the entire canvas each call, so multiple
+  // putImageData→source-in sequences destroy each previous layer.
+  // Solution: compute every pixel's final RGBA directly in one array.
 
-  const dilated = _dilate(src, cW, cH, dilateR);
-  const result  = _erode(dilated, cW, cH, erodeR);
+  const ctx = acrylicCtx;
+  ctx.clearRect(0, 0, w, h);
 
-  // ── Borde Fresnel ─────────────────────────────────────────────
-  const border = new Uint8Array(cW * cH);
-  for(let y = 1; y < cH-1; y++){
-    for(let x = 1; x < cW-1; x++){
-      const i = y*cW + x;
-      if(result[i] && (!result[i-1]||!result[i+1]||!result[i-cW]||!result[i+cW]))
-        border[i] = 1;
+  const ang = 160 * Math.PI / 180;
+  const cosA = Math.cos(ang), sinA = Math.sin(ang);
+
+  const out = new Uint8ClampedArray(w * h * 4);
+
+  for(let y = 0; y < h; y++){
+    for(let x = 0; x < w; x++){
+      const i = y * w + x;
+      if(!outer[i] || inner[i]) continue; // outside panel ring → transparent
+
+      // ── Is this a boundary pixel? ──────────────────────────────────
+      const onEdge =
+        (x === 0   || !outer[i-1]) ||
+        (x === w-1 || !outer[i+1]) ||
+        (y === 0   || !outer[i-w]) ||
+        (y === h-1 || !outer[i+w]);
+
+      // Top-edge pixel: no outer neighbour directly above
+      const onTop = (y === 0 || !outer[(y-1)*w+x]);
+
+      // ── 160° linear gradient (body fill) ───────────────────────────
+      // Project (x,y) onto the gradient axis
+      const cx = x - w/2, cy = y - h/2;
+      const proj = (cx*cosA + cy*sinA) / (Math.sqrt(w*w+h*h)/2); // -1..+1
+      const t = (proj + 1) / 2; // 0..1
+
+      // Gradient stops: rgba(215,225,242) → rgba(175,192,218) → rgba(195,212,232)
+      let br, bg, bb, ba;
+      if(t < 0.5){
+        const s = t / 0.5;
+        br = Math.round(215 + (175-215)*s);
+        bg = Math.round(225 + (192-225)*s);
+        bb = Math.round(242 + (218-242)*s);
+        ba = 0.28 + (0.22-0.28)*s;  // translucent body
+      } else {
+        const s = (t-0.5)/0.5;
+        br = Math.round(175 + (195-175)*s);
+        bg = Math.round(192 + (212-192)*s);
+        bb = Math.round(218 + (232-218)*s);
+        ba = 0.22 + (0.26-0.22)*s;  // translucent body
+      }
+
+      // ── Radial centre highlight (magnification effect) ─────────────
+      const dx = x - w*0.45, dy = y - h*0.38;
+      const dist = Math.sqrt(dx*dx + dy*dy) / (Math.max(w,h)*0.55);
+      const radA = Math.max(0, 0.18 * (1 - Math.min(dist,1)));
+      // Blend: body + radial white
+      const ra = Math.min(1, ba + radA);
+      let rr = Math.round(br + (240-br)*radA);
+      let rg = Math.round(bg + (248-bg)*radA);
+      let rb = Math.round(bb + (255-bb)*radA);
+
+      // ── Outer contour (dense bright white border) ──────────────────
+      if(onEdge){
+        rr = 255; rg = 255; rb = 255;
+      }
+
+      // ── Top highlight (extra bright on top edge) ───────────────────
+      if(onTop){
+        rr = 255; rg = 255; rb = 255;
+      }
+
+      const pi = i * 4;
+      out[pi+0] = rr;
+      out[pi+1] = rg;
+      out[pi+2] = rb;
+      out[pi+3] = onEdge || onTop
+        ? 175                                    // border: semi-dense (tweak this 0–255 for border opacity)
+        : Math.round(ra * 255);                  // body: translucent
     }
   }
 
-  // ── Posicionar canvas en signContent ─────────────────────────
-  // acrylicCvs es hermano de neonEl dentro de signContent.
-  // Usamos offsetLeft/Top de neonEl dentro de signContent (sin viewport).
-  acrylicCvs.width  = cW;
-  acrylicCvs.height = cH;
-  acrylicCvs.style.cssText = [
-    'position:absolute',
-    `left:${-pad}px`,
-    `top:${-pad}px`,
-    `width:${cW}px`,
-    `height:${cH}px`,
-    'z-index:2',
-    'pointer-events:none',
-    'opacity:1',
-    ].join(';') + ';';
+  ctx.putImageData(new ImageData(out, w, h), 0, 0);
 
-  // ── Pintar acrílico ───────────────────────────────────────────
-  const out = acrylicCtx.createImageData(cW, cH);
-  const nr  = hexToRgb(S.rgb ? currentRGBColor : S.color);
-
-  for(let i = 0; i < result.length; i++){
-    if(!result[i]) continue;
-    const px = i * 4;
-    const gx = (i % cW) / cW, gy = Math.floor(i / cW) / cH;
-    if(border[i]){
-      out.data[px]=255; out.data[px+1]=255; out.data[px+2]=255; out.data[px+3]=238;
-    } else {
-      const t=0.09, lm=0.77+(gx+gy)*0.07;
-      out.data[px]  =Math.min(255,Math.round((230*(1-t)+nr.r*t)*lm));
-      out.data[px+1]=Math.min(255,Math.round((238*(1-t)+nr.g*t)*lm));
-      out.data[px+2]=Math.min(255,Math.round((250*(1-t)+nr.b*t)*lm));
-      out.data[px+3]=168;
-    }
-  }
-  acrylicCtx.putImageData(out, 0, 0);
+  // ── Drop shadow ───────────────────────────────────────────────────
+  acrylicCvs.style.filter = 'drop-shadow(0px 4px 28px rgba(0,0,0,0.55))';
 }
+
+
 
 function hexToRgb(hex){ return {r:parseInt(hex.slice(1,3),16),g:parseInt(hex.slice(3,5),16),b:parseInt(hex.slice(5,7),16)}; }
 function darken(hex,f){ const {r,g,b}=hexToRgb(hex); return `rgb(${Math.round(r*f)},${Math.round(g*f)},${Math.round(b*f)})`; }
@@ -470,7 +558,7 @@ document.getElementById('wallGrid').addEventListener('click',e=>{
 document.getElementById('mountGrid').addEventListener('click',e=>{
   const b=e.target.closest('.mbtn'); if(!b)return;
   document.querySelectorAll('.mbtn').forEach(x=>x.classList.remove('on')); b.classList.add('on'); S.mount=b.dataset.m;
-  applyMount(); dots();
+  renderNeon(); dots();
 });
 
 document.getElementById('tRgb').addEventListener('change',function(){ S.rgb=this.checked; this.checked?startRGB():stopRGB(); dots(); });
