@@ -122,25 +122,37 @@ function _erode(src,w,h,r){
 function _renderAcrylic(){
   if(!S.backing){ acrylicCvs.style.opacity='0'; return; }
 
-  const neonRect   = neonEl.getBoundingClientRect();
-  const parentRect = signContent.getBoundingClientRect();
   // Morphology constants — defined early so PAD can depend on them
   const MARGIN       = 16; // physical acrylic thickness (px beyond glyph)
-  const MERGE_RADIUS = 40; // detection range for merging nearby letters
+  const MERGE_RADIUS = 50; // detection range for merging nearby letters
   const SMOOTH       = 4;  // open/close radius for corner rounding
   // PAD must always exceed the largest dilate radius used, or the mask
   // hits the canvas boundary and clips into a straight rectangular edge.
-  const PAD = MERGE_RADIUS + SMOOTH + 8;
-  const w   = Math.ceil(neonRect.width)  + PAD*2;
-  const h   = Math.ceil(neonRect.height) + PAD*2;
+  const PAD = MERGE_RADIUS + SMOOTH + 50;
+
+  // Use offset* instead of getBoundingClientRect() for positioning.
+  // getBoundingClientRect returns viewport coords AFTER CSS transforms
+  // (rotation, tilt) are applied — subtracting parent from child gives
+  // wrong relative coords whenever the sign is rotated or translated.
+  // offsetLeft/offsetTop/offsetWidth/offsetHeight are layout coords,
+  // computed BEFORE transforms, so the canvas stays locked to neonEl
+  // regardless of rotation, drag position, or tilt.
+  const nW = neonEl.offsetWidth;
+  const nH = neonEl.offsetHeight;
+  const nL = neonEl.offsetLeft;
+  const nT = neonEl.offsetTop;
+
+  const w = nW + PAD * 2;
+  const h = nH + PAD * 2;
   if(w < 4 || h < 4) return;
 
-  // Position canvas: shift left/up by PAD so extra room is symmetric
+  // Position canvas in layout space — it lives inside signContent so it
+  // inherits the same transforms automatically, no manual correction needed.
   acrylicCvs.width  = w;
   acrylicCvs.height = h;
   acrylicCvs.style.position      = 'absolute';
-  acrylicCvs.style.left          = (neonRect.left - parentRect.left - PAD) + 'px';
-  acrylicCvs.style.top           = (neonRect.top  - parentRect.top  - PAD) + 'px';
+  acrylicCvs.style.left          = (nL - PAD) + 'px';
+  acrylicCvs.style.top           = (nT - PAD) + 'px';
   acrylicCvs.style.pointerEvents = 'none';
   acrylicCvs.style.zIndex        = '2';
   acrylicCvs.style.opacity       = '1';
@@ -159,7 +171,8 @@ function _renderAcrylic(){
   const spans = neonEl.querySelectorAll('.nchar');
 
   spans.forEach(sp => {
-    const sr  = sp.getBoundingClientRect();
+    // Use offsetLeft/offsetTop relative to neonEl for the same reason as above:
+    // these are pre-transform layout coords and stay correct under rotation.
     const idx = parseInt(sp.dataset.idx);
     const ov  = S.charOverrides[idx] || {};
     const ch  = sp.textContent === '\u00A0' ? ' ' : sp.textContent;
@@ -168,13 +181,13 @@ function _renderAcrylic(){
     offCtx.textBaseline = 'alphabetic';
 
     const m  = offCtx.measureText(ch);
-    // fontBoundingBoxAscent = CSS ascent used by the browser for line-box layout
     const asc = m.fontBoundingBoxAscent !== undefined
       ? m.fontBoundingBoxAscent
       : m.actualBoundingBoxAscent;
 
-    const x = (sr.left - neonRect.left) + PAD;
-    const y = (sr.top  - neonRect.top)  + PAD + asc;
+    // offsetLeft/offsetTop of the span are relative to its offsetParent (neonEl)
+    const x = sp.offsetLeft + PAD;
+    const y = sp.offsetTop  + PAD + asc;
 
     offCtx.fillText(ch, x, y);
   });
