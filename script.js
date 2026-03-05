@@ -1,5 +1,5 @@
 const S = {
-  text:'Hello World', font:'Pacifico', color:'#b3f0ff',
+  text:'Aqui tu texto', font:'Pacifico', color:'#b3f0ff',
   scale:1, posX:0, posY:0, rotation:0, tiltY:0, bgX:50, bgY:50,
   mount:'libre',
   backing:false, rgb:false, power:true,
@@ -125,7 +125,7 @@ function _renderAcrylic(){
   // Morphology constants — defined early so PAD can depend on them
   const MARGIN       = 16; // physical acrylic thickness (px beyond glyph)
   const MERGE_RADIUS = 50; // detection range for merging nearby letters
-  const SMOOTH       = 4;  // open/close radius for corner rounding
+  const SMOOTH       = 10;  // open/close radius for corner rounding
   // PAD must always exceed the largest dilate radius used, or the mask
   // hits the canvas boundary and clips into a straight rectangular edge.
   const PAD = MERGE_RADIUS + SMOOTH + 50;
@@ -550,7 +550,7 @@ function getPinchDist(t){return Math.hypot(t[0].clientX-t[1].clientX,t[0].client
 document.getElementById('textInput').addEventListener('input',function(){
   const v=this.value.slice(0,80); this.value=v; S.text=v;
   document.getElementById('charCount').textContent=v.length+' caracteres';
-  S.charOverrides={}; closeCharMenu(); recalcFontSize(); updateDimBadge(); dots();
+  S.charOverrides={}; closeCharMenu(); renderNeon(); updateDimBadge(); dots();
 });
 document.getElementById('fontGrid').addEventListener('click',e=>{
   const b=e.target.closest('.fbtn'); if(!b)return;
