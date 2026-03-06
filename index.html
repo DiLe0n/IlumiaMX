@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Diseñador de Neón</title>
-<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300&family=Nunito:wght@300&family=Pacifico&family=Courgette&family=Yellowtail&family=Cookie&family=Kaushan+Script&family=Righteous&family=Orbitron:wght@400&family=Raleway:wght@300&family=Dancing+Script:wght@400;700&family=Great+Vibes&family=Sacramento&family=Lobster&family=Satisfy&family=Caveat:wght@400;700&family=Amatic+SC:wght@400;700&family=Permanent+Marker&family=Rock+Salt&family=Monoton&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Allura&family=Alex+Brush&family=Amatic+SC:wght@400;700&family=Baloo+2:wght@700&family=Boogaloo&family=Cinzel+Decorative&family=Comfortaa:wght@300&family=Cookie&family=Courgette&family=Crafty+Girls&family=Dancing+Script:wght@400;700&family=Fredoka+One&family=Great+Vibes&family=IM+Fell+English:ital@1&family=Italianno&family=Kaushan+Script&family=Limelight&family=Lobster&family=Mea+Culpa&family=Medula+One&family=Mr+De+Haviland&family=Nunito:wght@300&family=Orbitron:wght@400&family=Pacifico&family=Parisienne&family=Permanent+Marker&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poiret+One&family=Quicksand:wght@600&family=Raleway:wght@300&family=Redressed&family=Righteous&family=Rock+Salt&family=Russo+One&family=Sacramento&family=Satisfy&family=Shantell+Sans:wght@600&family=Titan+One&family=Yellowtail&family=Yeseva+One&family=Rye&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <script src="https://cdn.jsdelivr.net/npm/dom-to-image-more@3.4.0/dist/dom-to-image-more.min.js"></script></head>
 <body>
@@ -33,26 +33,66 @@
 
   <div class="block" data-tab="Fuente" data-idx="1">
     <div class="bhead"><span class="num">2</span><span class="blabel">Tipografía</span></div>
-    <div class="font-grid" id="fontGrid">
-      <div class="fbtn on" data-font="Pacifico"        style="font-family:'Pacifico'">Pacifico</div>
-      <div class="fbtn"    data-font="Courgette"        style="font-family:'Courgette'">Courgette</div>
-      <div class="fbtn"    data-font="Yellowtail"       style="font-family:'Yellowtail'">Yellowtail</div>
-      <div class="fbtn"    data-font="Cookie"           style="font-family:'Cookie';font-size:1.1rem">Cookie</div>
-      <div class="fbtn"    data-font="Kaushan Script"   style="font-family:'Kaushan Script'">Kaushan</div>
-      <div class="fbtn"    data-font="Dancing Script"   style="font-family:'Dancing Script'">Dancing</div>
-      <div class="fbtn"    data-font="Great Vibes"      style="font-family:'Great Vibes';font-size:1.05rem">Great Vibes</div>
-      <div class="fbtn"    data-font="Sacramento"       style="font-family:'Sacramento';font-size:1.05rem">Sacramento</div>
-      <div class="fbtn"    data-font="Lobster"          style="font-family:'Lobster'">Lobster</div>
-      <div class="fbtn"    data-font="Satisfy"          style="font-family:'Satisfy'">Satisfy</div>
-      <div class="fbtn"    data-font="Caveat"           style="font-family:'Caveat';font-weight:700">Caveat</div>
-      <div class="fbtn"    data-font="Rock Salt"        style="font-family:'Rock Salt';font-size:.56rem">Rock Salt</div>
-      <div class="fbtn"    data-font="Amatic SC"        style="font-family:'Amatic SC';font-weight:700;letter-spacing:1px">Amatic SC</div>
-      <div class="fbtn"    data-font="Comfortaa"        style="font-family:'Comfortaa';font-weight:300">Comfortaa</div>
-      <div class="fbtn"    data-font="Nunito"           style="font-family:'Nunito';font-weight:300">Nunito</div>
-      <div class="fbtn"    data-font="Raleway"          style="font-family:'Raleway';font-weight:300;letter-spacing:2px;font-size:.8rem">Raleway</div>
-      <div class="fbtn"    data-font="Righteous"        style="font-family:'Righteous'">Righteous</div>
-      <div class="fbtn"    data-font="Orbitron"         style="font-family:'Orbitron';font-size:.62rem">Orbitron</div>
-    </div>
+    <div class="font-tab-bar" id="fontTabBar">
+        <button class="ftab on" data-fi="0">Script</button>
+        <button class="ftab"    data-fi="1">Manuscrita</button>
+        <button class="ftab"    data-fi="2">Bold</button>
+        <button class="ftab"    data-fi="3">Elegante</button>
+      </div>
+      <div class="font-viewport">
+        <div class="font-track" id="fontTrack">
+
+          <!-- 0: Script & Caligráfica -->
+          <div class="font-panel">
+            <div class="font-grid" id="fontGrid">
+              <div class="fbtn on" data-font="Pacifico"       style="font-family:'Pacifico'">Pacifico</div>
+              <div class="fbtn"    data-font="Allura"         style="font-family:'Allura';font-size:1.1rem">Balsamic</div>
+              <div class="fbtn"    data-font="Mea Culpa"      style="font-family:'Mea Culpa';font-size:1.1rem">Dreaming</div>
+              <div class="fbtn"    data-font="Parisienne"     style="font-family:'Parisienne';font-size:1rem">Grechen</div>
+              <div class="fbtn"    data-font="Italianno"      style="font-family:'Italianno';font-size:1.1rem">Intro Scri</div>
+              <div class="fbtn"    data-font="Mr De Haviland" style="font-family:'Mr De Haviland';font-size:1.1rem">Barbra</div>
+              <div class="fbtn"    data-font="Alex Brush"     style="font-family:'Alex Brush';font-size:1.1rem">Chloe</div>
+              <div class="fbtn"    data-font="Satisfy"        style="font-family:'Satisfy'">Satisfy</div>
+              <div class="fbtn"    data-font="Redressed"      style="font-family:'Redressed';font-size:1.1rem">Redressed</div>
+              <div class="fbtn"    data-font="Crafty Girls"   style="font-family:'Crafty Girls';font-size:.82rem">Crafty G</div>
+            </div>
+          </div>
+
+          <!-- 1: Manuscrita & Casual -->
+          <div class="font-panel">
+            <div class="font-grid">
+              <div class="fbtn" data-font="Shantell Sans"    style="font-family:'Shantell Sans';font-weight:600;font-size:.78rem">Shantell</div>
+              <div class="fbtn" data-font="Boogaloo"         style="font-family:'Boogaloo'">TT Backwa</div>
+              <div class="fbtn" data-font="Permanent Marker" style="font-family:'Permanent Marker';font-size:.78rem">Stinger</div>
+              <div class="fbtn" data-font="Baloo 2"          style="font-family:'Baloo 2';font-weight:700">Bingoo</div>
+              <div class="fbtn" data-font="Fredoka One"      style="font-family:'Fredoka One'">Mak</div>
+            </div>
+          </div>
+
+          <!-- 2: Display & Bold -->
+          <div class="font-panel">
+            <div class="font-grid">
+              <div class="fbtn" data-font="Limelight"  style="font-family:'Limelight';letter-spacing:1px">Howell</div>
+              <div class="fbtn" data-font="Titan One"  style="font-family:'Titan One'">TT Polls</div>
+              <div class="fbtn" data-font="Yeseva One" style="font-family:'Yeseva One';font-size:.82rem">Romman</div>
+              <div class="fbtn" data-font="Russo One"  style="font-family:'Russo One';font-size:.78rem">Yodnam</div>
+              <div class="fbtn" data-font="Rye"        style="font-family:'Rye';font-size:.82rem">Lucky Bones</div>
+            </div>
+          </div>
+
+          <!-- 3: Elegante & Decorativa -->
+          <div class="font-panel">
+            <div class="font-grid">
+              <div class="fbtn" data-font="Cinzel Decorative" style="font-family:'Cinzel Decorative';font-size:.6rem;letter-spacing:1px">Sk Moralist</div>
+              <div class="fbtn" data-font="Medula One"        style="font-family:'Medula One';letter-spacing:1px">Medula</div>
+              <div class="fbtn" data-font="Poiret One"        style="font-family:'Poiret One';letter-spacing:2px;font-size:.78rem">Nove</div>
+              <div class="fbtn" data-font="IM Fell English"   style="font-family:'IM Fell English';font-style:italic;font-size:.82rem">Jayagiri</div>
+              <div class="fbtn" data-font="Quicksand"         style="font-family:'Quicksand';font-weight:600;font-size:.78rem">Art Nuvo</div>
+            </div>
+          </div>
+
+        </div><!-- /font-track -->
+      </div><!-- /font-viewport -->
   </div>
 
   <div class="block" data-tab="Color" data-idx="2">

@@ -552,6 +552,25 @@ document.getElementById('textInput').addEventListener('input',function(){
   document.getElementById('charCount').textContent=v.length+' caracteres';
   S.charOverrides={}; closeCharMenu(); renderNeon(); updateDimBadge(); dots();
 });
+// Font tab carousel
+const fontTrack = document.getElementById('fontTrack');
+let fontTabIdx = 0;
+
+document.getElementById('fontTabBar').addEventListener('click', e => {
+  const t = e.target.closest('.ftab'); if(!t) return;
+  fontTabIdx = parseInt(t.dataset.fi);
+  fontTrack.style.transform = `translateX(-${fontTabIdx * 100}%)`;
+  document.querySelectorAll('#fontTabBar .ftab').forEach((x,i) =>
+    x.classList.toggle('on', i === fontTabIdx));
+});
+
+document.getElementById('fontTrack').addEventListener('click', e => {
+  const b = e.target.closest('.fbtn'); if(!b) return;
+  document.querySelectorAll('#fontTrack .fbtn').forEach(x => x.classList.remove('on'));
+  b.classList.add('on'); S.font = b.dataset.font;
+  recalcFontSize(); dots();
+  if(S.mount === 'acrilico-redondo') applyMount();
+});
 document.getElementById('fontGrid').addEventListener('click',e=>{
   const b=e.target.closest('.fbtn'); if(!b)return;
   document.querySelectorAll('.fbtn').forEach(x=>x.classList.remove('on')); b.classList.add('on'); S.font=b.dataset.font;
