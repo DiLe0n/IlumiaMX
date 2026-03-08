@@ -6,7 +6,8 @@
 <title>Diseñador de Neón</title>
 <link href="https://fonts.googleapis.com/css2?family=Allura&family=Alex+Brush&family=Amatic+SC:wght@400;700&family=Baloo+2:wght@700&family=Boogaloo&family=Cinzel+Decorative&family=Comfortaa:wght@300&family=Cookie&family=Courgette&family=Crafty+Girls&family=Dancing+Script:wght@400;700&family=Fredoka+One&family=Great+Vibes&family=IM+Fell+English:ital@1&family=Italianno&family=Kaushan+Script&family=Limelight&family=Lobster&family=Mea+Culpa&family=Medula+One&family=Mr+De+Haviland&family=Nunito:wght@300&family=Orbitron:wght@400&family=Pacifico&family=Parisienne&family=Permanent+Marker&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poiret+One&family=Quicksand:wght@600&family=Raleway:wght@300&family=Redressed&family=Righteous&family=Rock+Salt&family=Russo+One&family=Sacramento&family=Satisfy&family=Shantell+Sans:wght@600&family=Titan+One&family=Yellowtail&family=Yeseva+One&family=Rye&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
-<script src="https://cdn.jsdelivr.net/npm/dom-to-image-more@3.4.0/dist/dom-to-image-more.min.js"></script></head>
+<script src="https://cdn.jsdelivr.net/npm/dom-to-image-more@3.4.0/dist/dom-to-image-more.min.js"></script>
+</head>
 <body>
 
 <header>
@@ -41,8 +42,6 @@
       </div>
       <div class="font-viewport">
         <div class="font-track" id="fontTrack">
-
-          <!-- 0: Script & Caligráfica -->
           <div class="font-panel">
             <div class="font-grid" id="fontGrid">
               <div class="fbtn on" data-font="Pacifico"       style="font-family:'Pacifico'">Pacifico</div>
@@ -57,8 +56,6 @@
               <div class="fbtn"    data-font="Crafty Girls"   style="font-family:'Crafty Girls';font-size:.82rem">Crafty G</div>
             </div>
           </div>
-
-          <!-- 1: Manuscrita & Casual -->
           <div class="font-panel">
             <div class="font-grid">
               <div class="fbtn" data-font="Shantell Sans"    style="font-family:'Shantell Sans';font-weight:600;font-size:.78rem">Shantell</div>
@@ -68,8 +65,6 @@
               <div class="fbtn" data-font="Fredoka One"      style="font-family:'Fredoka One'">Mak</div>
             </div>
           </div>
-
-          <!-- 2: Display & Bold -->
           <div class="font-panel">
             <div class="font-grid">
               <div class="fbtn" data-font="Limelight"  style="font-family:'Limelight';letter-spacing:1px">Howell</div>
@@ -79,8 +74,6 @@
               <div class="fbtn" data-font="Rye"        style="font-family:'Rye';font-size:.82rem">Lucky Bones</div>
             </div>
           </div>
-
-          <!-- 3: Elegante & Decorativa -->
           <div class="font-panel">
             <div class="font-grid">
               <div class="fbtn" data-font="Cinzel Decorative" style="font-family:'Cinzel Decorative';font-size:.6rem;letter-spacing:1px">Sk Moralist</div>
@@ -90,9 +83,8 @@
               <div class="fbtn" data-font="Quicksand"         style="font-family:'Quicksand';font-weight:600;font-size:.78rem">Art Nuvo</div>
             </div>
           </div>
-
-        </div><!-- /font-track -->
-      </div><!-- /font-viewport -->
+        </div>
+      </div>
   </div>
 
   <div class="block" data-tab="Color" data-idx="2">
@@ -128,7 +120,6 @@
     </div>
   </div>
 
-  <!-- SECCIÓN 5: MONTAJE — Sin sujeción, Acrílico Cuadrado, Backing Acrílico -->
   <div class="block" data-tab="Montaje" data-idx="4">
     <div class="bhead"><span class="num">5</span><span class="blabel">Tipo de Montaje</span></div>
     <div class="mount-grid" id="mountGrid" style="grid-template-columns:1fr 1fr 1fr;">
@@ -138,21 +129,19 @@
     </div>
   </div>
 
-  <!-- SECCIÓN 6: EXTRAS — sin parpadeo ni dimmer, con backing acrílico -->
-  <div class="block" data-tab="Extras" data-idx="5">
-    <div class="bhead"><span class="num">6</span><span class="blabel">Opciones Adicionales</span></div>
-    <div class="extras">
-      <div class="trow">
-        <div><div class="tname">RGB Multicolor</div><div class="tdesc">Ciclo de colores animado</div></div>
-        <label class="toggle"><input type="checkbox" id="tRgb"><span class="tslider"></span></label>
+  <!-- SECCIÓN 6: CONTROLADOR RF -->
+  <div class="block" data-tab="Control" data-idx="5">
+    <div class="bhead"><span class="num">6</span><span class="blabel">Controlador RF</span></div>
+    <div class="controller-row">
+      <div>
+        <div class="tname">Agregar Controlador</div>
+        <div class="tdesc">Control RF inalámbrico · aparece en el tablero</div>
       </div>
-      <div class="trow" style="padding-top:10px;border-top:1px solid var(--border);margin-top:2px;">
-        <div><div class="tname" style="font-size:.85rem;">💡 Neón Encendido</div><div class="tdesc">Apaga para ver el letrero sin luz</div></div>
-        <label class="toggle"><input type="checkbox" id="tPower" checked><span class="tslider"></span></label>
-      </div>
+      <label class="toggle"><input type="checkbox" id="tController"><span class="tslider"></span></label>
     </div>
   </div>
-  </div>
+
+  </div><!-- /sheet-content -->
 </aside>
 
 <div class="preview-col">
@@ -187,36 +176,128 @@
     <div class="canvas-overlay" id="canvasOverlay"></div>
     <canvas id="rainCanvas"></canvas>
     <div id="posWrapper">
-    <div id="signWrapper">
-      <div id="angleBadge">0°</div>
-      <div id="rotateHandle">
-        <svg viewBox="0 0 14 14" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round">
-          <path d="M2.5 7 A4.5 4.5 0 1 1 7 11.5"/>
-          <polyline points="2.5,4.5 2.5,7 5,7"/>
-        </svg>
-      </div>
-      <div id="sizeHint">esquina para redimensionar ↗</div>
-      <div id="tiltBadge">0°</div>
-      <div class="tiltHandle" id="tiltHandleY" title="Inclinar — arrastra ↔">
-        <svg viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round">
-          <line x1="1" y1="5" x2="9" y2="5"/>
-          <polyline points="3,2 1,5 3,8"/>
-          <polyline points="7,2 9,5 7,8"/>
-        </svg>
-      </div>
-      <div id="mountHook"></div>
-      <div id="signContent">
-        <div id="mountPlate"></div>
-        <canvas id="acrylicCanvas"></canvas>
-        <div id="neonText" style="font-family:'Pacifico'">Aqui tu texto</div>
-      </div>
-      <div id="mountBase"></div>
-      <div id="mountScrews"></div>
-      <div id="resizeHandle">
-        <svg viewBox="0 0 10 10"><line x1="2" y1="8" x2="8" y2="2" stroke="white" stroke-width="1.8" stroke-linecap="round"/><line x1="5" y1="8" x2="8" y2="5" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <div id="signWrapper">
+        <div id="angleBadge">0°</div>
+        <div id="rotateHandle">
+          <svg viewBox="0 0 14 14" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round">
+            <path d="M2.5 7 A4.5 4.5 0 1 1 7 11.5"/>
+            <polyline points="2.5,4.5 2.5,7 5,7"/>
+          </svg>
+        </div>
+        <div id="sizeHint">esquina para redimensionar ↗</div>
+        <div id="tiltBadge">0°</div>
+        <div class="tiltHandle" id="tiltHandleY" title="Inclinar — arrastra ↔">
+          <svg viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round">
+            <line x1="1" y1="5" x2="9" y2="5"/>
+            <polyline points="3,2 1,5 3,8"/>
+            <polyline points="7,2 9,5 7,8"/>
+          </svg>
+        </div>
+        <div id="mountHook"></div>
+        <div id="signContent">
+          <div id="mountPlate"></div>
+          <canvas id="acrylicCanvas"></canvas>
+          <div id="neonText" style="font-family:'Pacifico'">Aqui tu texto</div>
+        </div>
+        <div id="mountBase"></div>
+        <div id="mountScrews"></div>
+        <div id="resizeHandle">
+          <svg viewBox="0 0 10 10"><line x1="2" y1="8" x2="8" y2="2" stroke="white" stroke-width="1.8" stroke-linecap="round"/><line x1="5" y1="8" x2="8" y2="5" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
       </div>
     </div>
+
+    <!-- ═══ CONTROL REMOTO FLOTANTE EN CANVAS ═══ -->
+    <div id="canvasRemote" class="canvas-remote">
+      <div class="remote-body">
+        <div class="remote-top-bar">
+          <div class="remote-label-wrap">
+            <span class="remote-brand">LED CONTROLLER</span>
+            <span class="remote-sub">With RF Remote Control</span>
+            <span class="remote-sub">Peak Output Current: 12A</span>
+          </div>
+          <div class="remote-led-dot" id="remoteLed"></div>
+        </div>
+
+        <div class="remote-btns">
+          <!-- Row 1: Power -->
+          <div class="remote-row">
+            <button class="rbtn rbtn-power" id="rPower" title="Encender / Apagar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2v7"/>
+                <path d="M18.364 5.636a9 9 0 1 1-12.728 0"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Row 2: Dim / Bright- / Bright+ -->
+          <div class="remote-row remote-row-3">
+            <button class="rbtn rbtn-dim" id="rDim" title="Dim">
+              <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/></svg>
+              <span class="rbtn-label">DIM</span>
+            </button>
+            <button class="rbtn rbtn-ctrl" id="rBrightMinus" title="Bajar brillo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span class="rbtn-label">BRIGHT</span>
+            </button>
+            <button class="rbtn rbtn-ctrl" id="rBrightPlus" title="Subir brillo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span class="rbtn-label">BRIGHT</span>
+            </button>
+          </div>
+
+          <!-- Row 3: 100% / 50% / 25% -->
+          <div class="remote-row remote-row-3">
+            <button class="rbtn rbtn-pct rbtn-pct-on" id="rPct100">100%</button>
+            <button class="rbtn rbtn-pct" id="rPct50">50%</button>
+            <button class="rbtn rbtn-pct" id="rPct25">25%</button>
+          </div>
+
+          <!-- Row 4: Mode+ -->
+          <div class="remote-row">
+            <button class="rbtn rbtn-mode" id="rModePlus" title="Modo siguiente">
+              <span class="rbtn-small-label">MODE</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+          </div>
+
+          <!-- Row 5: Speed- / [gap] / Speed+ -->
+          <div class="remote-row remote-row-3">
+            <button class="rbtn rbtn-mode" id="rSpeedMinus" title="Velocidad −">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span class="rbtn-small-label">SPEED</span>
+            </button>
+            <div class="rbtn-spacer"></div>
+            <button class="rbtn rbtn-mode" id="rSpeedPlus" title="Velocidad +">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span class="rbtn-small-label">SPEED</span>
+            </button>
+          </div>
+
+          <!-- Row 6: Mode- -->
+          <div class="remote-row">
+            <button class="rbtn rbtn-mode" id="rModeMinus" title="Modo anterior">
+              <span class="rbtn-small-label">MODE</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="remote-footer">
+          <svg width="14" height="11" viewBox="0 0 22 17" fill="currentColor">
+            <path d="M11 0 L13.5 5 L11 3.5 L8.5 5 Z"/>
+            <rect x="10" y="5" width="2" height="8"/>
+            <path d="M5 7 Q2 8.5 5 10.5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+            <path d="M17 7 Q20 8.5 17 10.5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+            <path d="M2.5 4.5 Q-1 8.5 2.5 12.5" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+            <path d="M19.5 4.5 Q23 8.5 19.5 12.5" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+          </svg>
+          <span>RF Wireless</span>
+        </div>
+      </div>
     </div>
+    <!-- /canvasRemote -->
+
     <div id="charMenu">
       <div class="cmenu-carousel">
         <button class="cmenu-arr" id="cmenuPrev">‹</button>
@@ -231,8 +312,42 @@
       <div class="cmenu-sep"></div>
       <button class="cmenu-reset" id="cmenuReset" title="Restablecer">↺</button>
     </div>
-    <div class="dim-badge" id="dimBadge">~ 60 × 20 cm</div>
     <div class="scroll-hint" id="scrollHint">🖱 Rueda del ratón = redimensionar</div>
+
+    <!-- ═══ QUOTE PANEL — reemplaza el badge de dimensiones ═══ -->
+    <div id="quotePanel" class="quote-panel">
+      <!-- Header: label + tier badge -->
+      <div class="quote-header">
+        <span class="quote-title">Cotización</span>
+        <span class="quote-tier-badge" id="qTier">—</span>
+      </div>
+
+      <!-- Dimensions row -->
+      <div class="quote-dims-row">
+        <span class="quote-dim-val" id="qDims">— × — cm</span>
+        <span class="quote-dim-area" id="qArea">— cm²</span>
+      </div>
+
+      <div class="quote-divider"></div>
+
+      <!-- Price breakdown -->
+      <div class="quote-row">
+        <span class="quote-row-label">Letrero neón</span>
+        <span class="quote-row-val" id="qSignPrice">$—</span>
+      </div>
+      <div class="quote-row" id="qCtrlRow" style="display:none;">
+        <span class="quote-row-label">Controlador RF</span>
+        <span class="quote-row-val quote-ctrl-val" id="qCtrlPrice">+$150</span>
+      </div>
+
+      <div class="quote-divider"></div>
+
+      <!-- Total -->
+      <div class="quote-total-row">
+        <span class="quote-total-label" id="qTotalLabel">Total estimado</span>
+        <span class="quote-total-val" id="qTotal">$—</span>
+      </div>
+    </div>
   </div>
 </div>
 </div>
