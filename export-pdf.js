@@ -141,8 +141,8 @@
     });
   }
 
-  // ── Captura principal ─────────────────────────────────────────
-  async function captureSign() {
+// ── Captura principal ─────────────────────────────────────────
+async function captureSign() {
     const pc = document.getElementById('previewCanvas');
     const W  = pc.offsetWidth;
     const H  = pc.offsetHeight;
@@ -193,11 +193,32 @@
 
     // Obtener el tamaño de fuente real en pantalla para igualar proporciones
     const domFs = parseFloat(window.getComputedStyle(neonEl).fontSize) || 40;
+    const fontFamily = (typeof S !== 'undefined' ? S.font : 'Pacifico') || 'Pacifico';
 
     try {
-      const fontFamily = (typeof S !== 'undefined' ? S.font : 'Pacifico') || 'Pacifico';
       await document.fonts.load(domFs + "px '" + fontFamily + "'");
     } catch(e) {}
+
+    // =========================================================================
+    // DICCIONARIO DE AJUSTES POR TIPOGRAFÍA (Y)
+    // - Un número POSITIVO mueve el letrero hacia ABAJO.
+    // - Un número NEGATIVO mueve el letrero hacia ARRIBA.
+    // =========================================================================
+    
+    // AJUSTE GENERAL: Se aplicará a cualquier fuente que no esté en la lista de abajo
+    const AJUSTE_GENERAL = 5; 
+
+    const AJUSTES_POR_FUENTE = {
+      'Pacifico': 20,
+      'Monoton': -5,  
+      'NeonTubes': 3,
+      'Mea Culpa': 9 
+      // Agrega aquí los nombres exactos de tus demás tipografías...
+    };
+    
+    // Si la fuente no está en el diccionario, usa el AJUSTE_GENERAL
+    const ajusteY = AJUSTES_POR_FUENTE[fontFamily] !== undefined ? AJUSTES_POR_FUENTE[fontFamily] : AJUSTE_GENERAL;
+    // =========================================================================
 
     // Iniciar el Bounding Box considerando solo el neón
     let minX = neonRect.left - pcRect.left;
@@ -206,7 +227,6 @@
     let maxY = minY + neonRect.height;
 
     const acrylicCvsEl = document.getElementById('acrylicCanvas');
-    // Chequear si el acrílico es visible leyendo el estilo computado
     const isAcrylicVisible = acrylicCvsEl && parseFloat(window.getComputedStyle(acrylicCvsEl).opacity || acrylicCvsEl.style.opacity || '0') > 0;
     let acRect = null;
 
@@ -214,7 +234,7 @@
       acRect = acrylicCvsEl.getBoundingClientRect();
       const acX = acRect.left - pcRect.left;
       const acY = acRect.top - pcRect.top;
-      // Expandir el Bounding Box si el acrílico excede los límites
+      // Expandir el Bounding Box
       minX = Math.min(minX, acX);
       minY = Math.min(minY, acY);
       maxX = Math.max(maxX, acX + acRect.width);
@@ -231,29 +251,27 @@
     const neonCX = neonRect.left - pcRect.left + neonRect.width / 2;
     const neonCY = neonRect.top - pcRect.top + neonRect.height / 2;
 
-    // 5. Calcular escala para que el bloque combinado quepa siempre (Margen del 15%)
+    // 5. Calcular escala
     const maxDrawW = W * 0.85;
     const maxDrawH = H * 0.85;
-    // Evitar divisiones entre cero por seguridad
     const safeSignW = signW > 0 ? signW : W;
     const safeSignH = signH > 0 ? signH : H;
     const fitScale = Math.min(maxDrawW / safeSignW, maxDrawH / safeSignH);
 
     // 6. Trazar elementos unidos en un contenedor virtual centrado
     ctx.save();
-    ctx.translate(W / 2, H / 2);      // Mover lapicero al centro del lienzo
-    ctx.scale(fitScale, fitScale);    // Escalar al factor que garantiza que quepa
-    ctx.translate(-signCX, -signCY);  // Desfasar el centro combinado hacia el origen (0,0)
+    ctx.translate(W / 2, H / 2);
+    ctx.scale(fitScale, fitScale);
+    ctx.translate(-signCX, -signCY);
 
-    // Dibujar acrílico usando su posición original
     if (isAcrylicVisible && acRect) {
       const acX = acRect.left - pcRect.left;
       const acY = acRect.top - pcRect.top;
       ctx.drawImage(acrylicCvsEl, acX, acY, acRect.width, acRect.height);
     }
 
-    // Dibujar neón en su posición original
-    drawNeonText(ctx, neonCX, neonCY, domFs);
+    // Dibujar neón sumando el ajuste dinámico por tipografía (o el general)
+    drawNeonText(ctx, neonCX, neonCY + ajusteY, domFs);
     ctx.restore();
 
     return {
