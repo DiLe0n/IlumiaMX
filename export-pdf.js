@@ -82,47 +82,25 @@
     return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
   }
 
-  // ── Dibujar texto neón en canvas ──────────────────────────────
-  // Replica tubeShadow de script.js usando ctx.shadowColor/shadowBlur
-  // y dibuja el texto centrado independientemente de la posición en pantalla.
-  function drawNeonText(ctx, cw, ch) {
+  function drawNeonText(ctx, centerX, centerY, fs) {
     if (typeof S === 'undefined') return;
-
     const lines  = (S.text || 'Texto').split('\n');
     const color  = S.power !== false ? S.color : '#1c0f0a';
     const font   = S.font  || 'Pacifico';
 
-    // Escalar fuente para que quepa bien en el canvas de exportación
-    // Usamos aprox 9% del ancho por carácter, limitado por la altura
-    const maxLen = Math.max(...lines.map(function(l){ return l.length; }), 1);
-    const fsW    = (cw * 0.82) / (maxLen * 0.58);
-    const fsH    = (ch * 0.72) / (lines.length * 1.25);
-    const fs     = Math.max(18, Math.min(fsW, fsH));
-
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
 
-    // Función para dibujar una capa de sombra/glow
-    function drawLayer(text, x, y, shadow, blur, color) {
-      ctx.shadowColor = shadow;
-      ctx.shadowBlur  = blur;
-      ctx.fillStyle   = color;
-      ctx.fillText(text, x, y);
-    }
-
-    const lineH = fs * 1.25;
+    const lineH  = fs * 1.25;
     const totalH = lineH * lines.length;
-    const startY = ch / 2 - totalH / 2 + lineH / 2;
+    // Iniciamos calculando el salto de línea respecto al centro real (centerY)
+    const startY = centerY - totalH / 2 + lineH / 2;
 
     lines.forEach(function (line, i) {
-      const x = cw / 2;
+      const x = centerX;
       const y = startY + i * lineH;
       const displayLine = line || ' ';
 
-      // Chequear overrides por carácter para fuentes mixtas
-      // Por simplificación usamos la fuente global (S.font)
-      // Si hay charOverrides con fuentes diferentes, se usan en pantalla
-      // pero en el canvas de exportación usamos la fuente principal
       ctx.font = fs + "px '" + font + "', cursive, sans-serif";
 
       if (S.power === false) {
@@ -208,31 +186,75 @@
     ctx.fillStyle = 'rgba(0,0,0,' + alpha + ')';
     ctx.fillRect(0, 0, W, H);
 
-    // 4. Texto neón centrado
+    // 4. Capturar coordenadas reales del DOM para crear el bloque
+    const pcRect = pc.getBoundingClientRect();
+    const neonEl = document.getElementById('neonText');
+    const neonRect = neonEl.getBoundingClientRect();
+
+    // Obtener el tamaño de fuente real en pantalla para igualar proporciones
+    const domFs = parseFloat(window.getComputedStyle(neonEl).fontSize) || 40;
+
     try {
       const fontFamily = (typeof S !== 'undefined' ? S.font : 'Pacifico') || 'Pacifico';
-      const fs = Math.min(W * 0.12, H * 0.45);
-      await document.fonts.load(fs + "px '" + fontFamily + "'");
+      await document.fonts.load(domFs + "px '" + fontFamily + "'");
     } catch(e) {}
 
-    // 5. Acrílico (si está activo) — componer ANTES del texto neón
-    // para que el glow quede encima del acrílico
+    // Iniciar el Bounding Box considerando solo el neón
+    let minX = neonRect.left - pcRect.left;
+    let minY = neonRect.top - pcRect.top;
+    let maxX = minX + neonRect.width;
+    let maxY = minY + neonRect.height;
+
     const acrylicCvsEl = document.getElementById('acrylicCanvas');
-    if (acrylicCvsEl && parseFloat(acrylicCvsEl.style.opacity || '0') > 0) {
-      try {
-        const acL  = parseFloat(acrylicCvsEl.style.left  || '0');
-        const acT  = parseFloat(acrylicCvsEl.style.top   || '0');
-        const acW  = acrylicCvsEl.offsetWidth;
-        const acH  = acrylicCvsEl.offsetHeight;
-        // El acrylicCanvas ya tiene todo renderizado en él — solo lo copiamos
-        ctx.drawImage(acrylicCvsEl, acL, acT, acW, acH);
-      } catch(e) {
-        console.warn('[export-pdf] acrílico no compuesto:', e);
-      }
+    // Chequear si el acrílico es visible leyendo el estilo computado
+    const isAcrylicVisible = acrylicCvsEl && parseFloat(window.getComputedStyle(acrylicCvsEl).opacity || acrylicCvsEl.style.opacity || '0') > 0;
+    let acRect = null;
+
+    if (isAcrylicVisible) {
+      acRect = acrylicCvsEl.getBoundingClientRect();
+      const acX = acRect.left - pcRect.left;
+      const acY = acRect.top - pcRect.top;
+      // Expandir el Bounding Box si el acrílico excede los límites
+      minX = Math.min(minX, acX);
+      minY = Math.min(minY, acY);
+      maxX = Math.max(maxX, acX + acRect.width);
+      maxY = Math.max(maxY, acY + acRect.height);
     }
 
-    // 6. Texto neón encima del acrílico
-    drawNeonText(ctx, W, H);
+    // Dimensiones y centro absoluto del "bloque combinado"
+    const signW = maxX - minX;
+    const signH = maxY - minY;
+    const signCX = minX + signW / 2;
+    const signCY = minY + signH / 2;
+
+    // Centro exacto del texto respecto al DOM
+    const neonCX = neonRect.left - pcRect.left + neonRect.width / 2;
+    const neonCY = neonRect.top - pcRect.top + neonRect.height / 2;
+
+    // 5. Calcular escala para que el bloque combinado quepa siempre (Margen del 15%)
+    const maxDrawW = W * 0.85;
+    const maxDrawH = H * 0.85;
+    // Evitar divisiones entre cero por seguridad
+    const safeSignW = signW > 0 ? signW : W;
+    const safeSignH = signH > 0 ? signH : H;
+    const fitScale = Math.min(maxDrawW / safeSignW, maxDrawH / safeSignH);
+
+    // 6. Trazar elementos unidos en un contenedor virtual centrado
+    ctx.save();
+    ctx.translate(W / 2, H / 2);      // Mover lapicero al centro del lienzo
+    ctx.scale(fitScale, fitScale);    // Escalar al factor que garantiza que quepa
+    ctx.translate(-signCX, -signCY);  // Desfasar el centro combinado hacia el origen (0,0)
+
+    // Dibujar acrílico usando su posición original
+    if (isAcrylicVisible && acRect) {
+      const acX = acRect.left - pcRect.left;
+      const acY = acRect.top - pcRect.top;
+      ctx.drawImage(acrylicCvsEl, acX, acY, acRect.width, acRect.height);
+    }
+
+    // Dibujar neón en su posición original
+    drawNeonText(ctx, neonCX, neonCY, domFs);
+    ctx.restore();
 
     return {
       dataUrl: offscreen.toDataURL('image/png'),
