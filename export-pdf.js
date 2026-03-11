@@ -230,15 +230,18 @@ async function captureSign() {
     const isAcrylicVisible = acrylicCvsEl && parseFloat(window.getComputedStyle(acrylicCvsEl).opacity || acrylicCvsEl.style.opacity || '0') > 0;
     let acRect = null;
 
-    if (isAcrylicVisible) {
-      acRect = acrylicCvsEl.getBoundingClientRect();
-      const acX = acRect.left - pcRect.left;
-      const acY = acRect.top - pcRect.top;
-      // Expandir el Bounding Box
-      minX = Math.min(minX, acX);
-      minY = Math.min(minY, acY);
-      maxX = Math.max(maxX, acX + acRect.width);
-      maxY = Math.max(maxY, acY + acRect.height);
+    // Expandir con mountPlate (acrílico cuadrado) si visible
+    const mountPlateEl    = document.getElementById('mountPlate');
+    const mountPlateOpacity = parseFloat(mountPlateEl?.style.opacity ?? '0');
+    let mpRect = null;
+    if (mountPlateOpacity > 0) {
+      mpRect = mountPlateEl.getBoundingClientRect();
+      const mpX = mpRect.left - pcRect.left;
+      const mpY = mpRect.top  - pcRect.top;
+      minX = Math.min(minX, mpX);
+      minY = Math.min(minY, mpY);
+      maxX = Math.max(maxX, mpX + mpRect.width);
+      maxY = Math.max(maxY, mpY + mpRect.height);
     }
 
     // Dimensiones y centro absoluto del "bloque combinado"
@@ -264,9 +267,47 @@ async function captureSign() {
     ctx.scale(fitScale, fitScale);
     ctx.translate(-signCX, -signCY);
 
-    if (isAcrylicVisible && acRect) {
+    // mountPlate (acrílico cuadrado)
+    if (mpRect) {
+      const mpX = mpRect.left - pcRect.left;
+      const mpY = mpRect.top  - pcRect.top;
+      const mpW = mpRect.width;
+      const mpH = mpRect.height;
+
+      const grad = ctx.createLinearGradient(mpX, mpY, mpX + mpW, mpY + mpH);
+      grad.addColorStop(0,   'rgba(220,230,245,0.22)');
+      grad.addColorStop(0.5, 'rgba(180,195,220,0.15)');
+      grad.addColorStop(1,   'rgba(200,215,235,0.20)');
+      ctx.save();
+      ctx.shadowColor   = 'rgba(0,0,0,0.55)';
+      ctx.shadowBlur    = 28;
+      ctx.shadowOffsetY = 4;
+      const r = 10;
+      ctx.beginPath();
+      ctx.moveTo(mpX + r, mpY);
+      ctx.lineTo(mpX + mpW - r, mpY);
+      ctx.quadraticCurveTo(mpX + mpW, mpY,       mpX + mpW, mpY + r);
+      ctx.lineTo(mpX + mpW, mpY + mpH - r);
+      ctx.quadraticCurveTo(mpX + mpW, mpY + mpH, mpX + mpW - r, mpY + mpH);
+      ctx.lineTo(mpX + r,   mpY + mpH);
+      ctx.quadraticCurveTo(mpX,       mpY + mpH, mpX,           mpY + mpH - r);
+      ctx.lineTo(mpX, mpY + r);
+      ctx.quadraticCurveTo(mpX,       mpY,       mpX + r,       mpY);
+      ctx.closePath();
+      ctx.fillStyle = grad;
+      ctx.fill();
+      ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
+      ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+      ctx.lineWidth   = 1.5;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // acrylicCanvas (backing)
+    if (isAcrylicVisible) {
+      acRect = acrylicCvsEl.getBoundingClientRect();
       const acX = acRect.left - pcRect.left;
-      const acY = acRect.top - pcRect.top;
+      const acY = acRect.top  - pcRect.top;
       ctx.drawImage(acrylicCvsEl, acX, acY, acRect.width, acRect.height);
     }
 
