@@ -388,7 +388,7 @@ async function captureSign() {
 
     const signImgSrc = capture ? capture.dataUrl : '';
     const signBlock  = capture
-      ? '<div class="sign-wrap"><img src="' + signImgSrc + '" alt="Vista previa del letrero"><div class="sign-wm">ILUMIA<em>MX</em></div></div>'
+      ? '<div class="sign-wrap"><img src="' + signImgSrc + '" alt="Vista previa del letrero"><div class="sign-wm">' + Array(20).fill('<span>ilumia<em>MX</em></span>').join('') + '</div></div>'
       : '<div class="sign-wrap no-img"><span>Vista previa no disponible</span></div>';
 
     const ctrlSpecRow  = q.hasCtrl ? '<tr><td>Controlador RF</td><td>Incluido</td></tr>' : '';
@@ -424,7 +424,7 @@ async function captureSign() {
 + '.sign-wrap{width:100%;flex-shrink:0;background:#0d0d0d;border-radius:8px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.22);height:82mm;display:flex;align-items:center;justify-content:center;position:relative;}\n'
 + '.sign-wrap img{width:100%;height:100%;object-fit:contain;display:block;}\n'
 + '.sign-wrap.no-img{border:1.5px dashed #444;}\n'
-+ '.sign-wrap.no-img span{color:#555;font-size:8pt;}.sign-wm{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:"Plus Jakarta Sans",sans-serif;font-weight:800;font-size:42pt;letter-spacing:8px;color:rgba(255,255,255,0.055);text-transform:uppercase;pointer-events:none;user-select:none;}.sign-wm em{color:rgba(255,255,255,0.055);font-style:normal;}\n'
++ '.sign-wrap.no-img span{color:#555;font-size:8pt;}.sign-wm{position:absolute;inset:-50%;display:flex;flex-wrap:wrap;align-content:space-around;justify-content:space-around;transform:rotate(-35deg);pointer-events:none;user-select:none;gap:10px 30px;}.sign-wm span{font-family:"Plus Jakarta Sans",sans-serif;font-weight:800;font-size:22pt;letter-spacing:4px;color:rgba(255,255,255,0.07);white-space:nowrap;}.sign-wm span em{font-style:italic;}\n'
 + '.slabel{font-size:8pt;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:#8a8680;margin-bottom:4px;}\n'
 + '.specs{width:100%;border-collapse:collapse;font-size:9pt;}\n'
 + '.specs tr:nth-child(odd) td{background:#f7f5f2;}\n'
