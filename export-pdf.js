@@ -91,7 +91,7 @@
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
 
-    const lineH  = fs * 1.25;
+    const lineH  = fs * 1.1;
     const totalH = lineH * lines.length;
     // Iniciamos calculando el salto de línea respecto al centro real (centerY)
     const startY = centerY - totalH / 2 + lineH / 2;
@@ -209,12 +209,14 @@ async function captureSign() {
     const AJUSTE_GENERAL = 5; 
 
     const AJUSTES_POR_FUENTE = {
-      'Pacifico': 20,
+      'Pacifico': 25,
       'Monoton': -5,  
       'NeonTubes': 3,
       'Mea Culpa': 9 
       // Agrega aquí los nombres exactos de tus demás tipografías...
     };
+
+    const BACKING_LINE_SPACING = 30; // px extra por renglón adicional
     
     // Si la fuente no está en el diccionario, usa el AJUSTE_GENERAL
     const ajusteY = AJUSTES_POR_FUENTE[fontFamily] !== undefined ? AJUSTES_POR_FUENTE[fontFamily] : AJUSTE_GENERAL;
@@ -306,9 +308,44 @@ async function captureSign() {
     // acrylicCanvas (backing)
     if (isAcrylicVisible) {
       acRect = acrylicCvsEl.getBoundingClientRect();
-      const acX = acRect.left - pcRect.left;
-      const acY = acRect.top  - pcRect.top;
-      ctx.drawImage(acrylicCvsEl, acX, acY, acRect.width, acRect.height);
+      const acX    = acRect.left - pcRect.left;
+      const acY    = acRect.top  - pcRect.top;
+      const _lines = (typeof S !== 'undefined' ? (S.text || '').split('\n').length : 1);
+
+      if (_lines <= 1 || BACKING_LINE_SPACING === 0) {
+        ctx.drawImage(acrylicCvsEl, acX, acY, acRect.width, acRect.height);
+      } else {
+        const srcW       = acrylicCvsEl.width;
+        const srcH       = acrylicCvsEl.height;
+        const totalExtra = BACKING_LINE_SPACING * (_lines - 1);
+        const newH       = acRect.height + totalExtra;
+        const startY     = acY - totalExtra / 2;
+        const dstScale   = acRect.height / srcH;  // escala src→dst original
+
+        // Tamaño del borde que NO se estira (25% arriba y 25% abajo)
+        const BORDER = Math.floor(srcH * 0.25);
+        const borderDst = BORDER * dstScale;
+
+        // ── Franja superior (borde intacto) ──────────────────────
+        ctx.drawImage(acrylicCvsEl,
+          0, 0,               srcW, BORDER,
+          acX, startY,        acRect.width, borderDst
+        );
+
+        // ── Franja central (se estira para generar más acrílico) ─
+        const midSrcH = srcH - BORDER * 2;
+        const midDstH = newH - borderDst * 2;
+        ctx.drawImage(acrylicCvsEl,
+          0, BORDER,                      srcW, midSrcH,
+          acX, startY + borderDst,        acRect.width, midDstH
+        );
+
+        // ── Franja inferior (borde intacto) ──────────────────────
+        ctx.drawImage(acrylicCvsEl,
+          0, srcH - BORDER,                         srcW, BORDER,
+          acX, startY + newH - borderDst,           acRect.width, borderDst
+        );
+      }
     }
 
     // Dibujar neón sumando el ajuste dinámico por tipografía (o el general)
@@ -338,6 +375,11 @@ async function captureSign() {
     const capture    = await captureSign();
     const q          = readQuote();
     const today      = new Date().toLocaleDateString('es-MX', { year:'numeric', month:'long', day:'numeric' });
+    const _now    = new Date();
+    const _pad    = n => String(n).padStart(2, '0');
+    const fileDate = _now.getFullYear() + _pad(_now.getMonth() + 1) + _pad(_now.getDate());
+    const fileTime = _pad(_now.getHours()) + _pad(_now.getMinutes());
+    const fileName = 'cotizacion_ilumiaMX_' + fileDate + '_' + fileTime;
     const textoNeon  = typeof S !== 'undefined' ? S.text.replace(/\n/g, ' / ') : '—';
     const font       = typeof S !== 'undefined' ? S.font : '—';
     const colorLabel = document.getElementById('colorLabel').textContent;
@@ -366,7 +408,7 @@ async function captureSign() {
 + '<html lang="es">\n'
 + '<head>\n'
 + '<meta charset="UTF-8">\n'
-+ '<title>Cotizacion Ilumia</title>\n'
++ '<title>' + fileName + '</title>\n'
 + '<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">\n'
 + '<style>\n'
 + '*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}\n'
