@@ -26,7 +26,7 @@
     return {
       libre: 'Sin sujeción',
       'acrilico-cuadrado': 'Acrílico Cuadrado',
-      backing: 'Backing Acrílico',
+      backing: 'Base Acrílica',
     }[key] || key;
   }
 
