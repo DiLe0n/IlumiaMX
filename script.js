@@ -118,7 +118,7 @@ function _erode(src,w,h,r){
 
 function _renderAcrylic(){
   if(!S.backing){ acrylicCvs.style.opacity='0'; return; }
-  const MARGIN=16,MERGE_RADIUS=50,SMOOTH=10,PAD=MERGE_RADIUS+SMOOTH+50;
+  const MARGIN=16,MERGE_RADIUS=80,SMOOTH=10,PAD=MERGE_RADIUS+SMOOTH+50;
   const nW=neonEl.offsetWidth,nH=neonEl.offsetHeight,nL=neonEl.offsetLeft,nT=neonEl.offsetTop;
   const w=nW+PAD*2,h=nH+PAD*2;
   if(w<4||h<4)return;
@@ -806,6 +806,39 @@ document.getElementById('rSpeedMinus').addEventListener('click', function(){
   if(mode==='smooth' && rgbInt){ stopRGB(); startRGB(); }
   else if(mode==='flash'||mode==='fade') applyMode();
 });
+
+// ── Quote panel: evitar que interfiera con el drag del canvas ──
+document.getElementById('quotePanel').addEventListener('pointerdown', e => e.stopPropagation());
+
+// ── Minimize: Quote Panel ──
+(function(){
+  const panel = document.getElementById('quotePanel');
+  const btn   = document.getElementById('quotePanelMinBtn');
+  const icon  = document.getElementById('quotePanelMinIcon');
+  const LINE  = '<line x1="2" y1="5" x2="8" y2="5"/>';
+  const PLUS  = '<line x1="5" y1="2" x2="5" y2="8"/><line x1="2" y1="5" x2="8" y2="5"/>';
+  btn.addEventListener('click', function(e){
+    e.stopPropagation();
+    const minimized = panel.classList.toggle('minimized');
+    icon.innerHTML = minimized ? PLUS : LINE;
+    btn.title = minimized ? 'Expandir' : 'Minimizar';
+  });
+})();
+
+// ── Minimize: Canvas Remote ──
+(function(){
+  const remote = document.getElementById('canvasRemote');
+  const btn    = document.getElementById('remoteMinBtn');
+  const icon   = document.getElementById('remoteMinIcon');
+  const LINE   = '<line x1="2" y1="5" x2="8" y2="5"/>';
+  const PLUS   = '<line x1="5" y1="2" x2="5" y2="8"/><line x1="2" y1="5" x2="8" y2="5"/>';
+  btn.addEventListener('click', function(e){
+    e.stopPropagation();
+    const minimized = remote.classList.toggle('minimized');
+    icon.innerHTML = minimized ? PLUS : LINE;
+    btn.title = minimized ? 'Expandir' : 'Minimizar';
+  });
+})();
 
 // ── Init ──
 canonicalCanvasW = previewCanvas.offsetWidth || 800;

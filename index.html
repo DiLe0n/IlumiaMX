@@ -11,8 +11,8 @@
 <body>
 
 <header>
-  <div class="logo">ILUMIA<em>MX</em></div>
   <div class="header-mid">Cotizador de anuncios</div>
+  <div class="logo">ILUMIA<em>MX</em></div>
   <div class="dots">
     <div class="dot on" id="d1"></div><div class="dot" id="d2"></div>
     <div class="dot" id="d3"></div><div class="dot" id="d4"></div>
@@ -125,7 +125,7 @@
     <div class="mount-grid" id="mountGrid" style="grid-template-columns:1fr 1fr 1fr;">
       <button class="mbtn on" data-m="libre"><span class="mico">✨</span>Sin sujeción<br><small style="font-size:.55rem;opacity:.7">Sólo el letrero</small></button>
       <button class="mbtn" data-m="acrilico-cuadrado"><span class="mico">⬜</span>Acrílico Cuadrado<br><small style="font-size:.55rem;opacity:.7">Placa rectangular</small></button>
-      <button class="mbtn" data-m="backing"><span class="mico">🪟</span>Backing Acrílico<br><small style="font-size:.55rem;opacity:.7">Recorte del texto</small></button>
+      <button class="mbtn" data-m="backing"><span class="mico">🪟</span>Base Acrílica<br><small style="font-size:.55rem;opacity:.7">Recorte del texto</small></button>
     </div>
   </div>
 
@@ -185,6 +185,7 @@
   <div class="preview-canvas" id="previewCanvas"
     style="background-image:url('https://images.unsplash.com/photo-1770816306935-d0a08e93d823?w=1400&q=85')">
     <div class="canvas-overlay" id="canvasOverlay"></div>
+    <div class="canvas-watermark" aria-hidden="true"></div>
     <canvas id="rainCanvas"></canvas>
     <div id="posWrapper">
       <div id="signWrapper">
@@ -227,7 +228,12 @@
             <span class="remote-sub">With RF Remote Control</span>
             <span class="remote-sub">Peak Output Current: 12A</span>
           </div>
-          <div class="remote-led-dot" id="remoteLed"></div>
+          <div class="remote-top-right">
+            <div class="remote-led-dot" id="remoteLed"></div>
+            <button class="remote-min-btn" id="remoteMinBtn" title="Minimizar">
+              <svg id="remoteMinIcon" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="2" y1="5" x2="8" y2="5"/></svg>
+            </button>
+          </div>
         </div>
 
         <div class="remote-btns">
@@ -327,10 +333,15 @@
 
     <!-- ═══ QUOTE PANEL — reemplaza el badge de dimensiones ═══ -->
     <div id="quotePanel" class="quote-panel">
-      <!-- Header: label + tier badge -->
+      <!-- Header: label + tier badge + minimize -->
       <div class="quote-header">
         <span class="quote-title">Cotización</span>
-        <span class="quote-tier-badge" id="qTier">—</span>
+        <div class="quote-header-right">
+          <span class="quote-tier-badge" id="qTier">—</span>
+          <button class="quote-min-btn" id="quotePanelMinBtn" title="Minimizar">
+            <svg id="quotePanelMinIcon" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="2" y1="5" x2="8" y2="5"/></svg>
+          </button>
+        </div>
       </div>
 
       <!-- Dimensions row -->
