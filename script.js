@@ -238,16 +238,151 @@ function renderNeon(){
 // The canvas represents a real-world wall space of ~200cm wide.
 // We use this to derive centimetre dimensions from pixel dimensions.
 // Price tiers are based on area (cm²) matching the official price table.
-const PRICE_TIERS = [
+let PRICE_TIERS = [
   { maxArea: 900,  label: '30×30 cm',  price: 1000 },
   { maxArea: 1600, label: '40×40 cm',  price: 1400 },
   { maxArea: 2500, label: '50×50 cm',  price: 1600 },
   { maxArea: 3600, label: '60×60 cm',  price: 1800 },
   { maxArea: 4900, label: '70×70 cm',  price: 2100 },
 ];
-const CONTROLLER_PRICE = 150;
+let CONTROLLER_PRICE = 150;
 const CANVAS_REAL_WIDTH_CM = 140; // canvas width = 140 cm wall reference
 let canonicalCanvasW = 0; // set on init, never updated during preview mode
+
+// ── Admin-configurable data ───────────────────────────────────────
+const ADMIN_STORAGE_KEY = 'ilumia_admin_settings';
+
+let WALLS_LIST = [
+  {url:'https://images.unsplash.com/photo-1770816306935-d0a08e93d823?w=1400&q=85',  thumb:'https://images.unsplash.com/photo-1770816306935-d0a08e93d823?w=400&q=80&fit=crop',  label:'Local 1',     overlay:.25},
+  {url:'https://plus.unsplash.com/premium_photo-1728155006673-887f27d7694f?w=1400&q=85', thumb:'https://plus.unsplash.com/premium_photo-1728155006673-887f27d7694f?w=400&q=80&fit=crop', label:'Local 2',     overlay:.30},
+  {url:'https://images.unsplash.com/photo-1769501203673-159257ecb72d?w=1400&q=85',  thumb:'https://images.unsplash.com/photo-1769501203673-159257ecb72d?w=400&q=80&fit=crop',  label:'Local 3',     overlay:.28},
+  {url:'https://images.unsplash.com/photo-1770646403987-64cf5c08c870?w=1400&q=85',  thumb:'https://images.unsplash.com/photo-1770646403987-64cf5c08c870?w=400&q=80&fit=crop',  label:'Local 4',     overlay:.32},
+  {url:'https://images.unsplash.com/photo-1770319675686-ae3b11647bcd?w=1400&q=85',  thumb:'https://images.unsplash.com/photo-1770319675686-ae3b11647bcd?w=400&q=80&fit=crop',  label:'Local 5',     overlay:.28},
+  {url:'https://plus.unsplash.com/premium_photo-1683121299733-06eed1e7df79?w=1400&q=85', thumb:'https://plus.unsplash.com/premium_photo-1683121299733-06eed1e7df79?w=400&q=80&fit=crop', label:'Local 6',     overlay:.35},
+  {url:'https://images.unsplash.com/photo-1526887593587-a307ea5d46b4?w=1400&q=85',  thumb:'https://images.unsplash.com/photo-1526887593587-a307ea5d46b4?w=400&q=80&fit=crop',  label:'Local 7',     overlay:.30},
+  {url:'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1400&q=85',  thumb:'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&q=80&fit=crop',  label:'Hotel Lobby', overlay:.28},
+];
+
+let FONT_TABS = [
+  {label:'Script', fonts:[
+    {k:'Pacifico',l:'Pacifico'},{k:'Allura',l:'Balsamic'},{k:'Mea Culpa',l:'Dreaming'},
+    {k:'Parisienne',l:'Grechen'},{k:'Italianno',l:'Intro Scri'},{k:'Mr De Haviland',l:'Barbra'},
+    {k:'Alex Brush',l:'Chloe'},{k:'Satisfy',l:'Satisfy'},{k:'Redressed',l:'Redressed'},{k:'Crafty Girls',l:'Crafty G'},
+  ]},
+  {label:'Manuscrita', fonts:[
+    {k:'Shantell Sans',l:'Shantell'},{k:'Boogaloo',l:'TT Backwa'},{k:'Permanent Marker',l:'Stinger'},
+    {k:'Baloo 2',l:'Bingoo'},{k:'Fredoka One',l:'Mak'},
+  ]},
+  {label:'Bold', fonts:[
+    {k:'Limelight',l:'Howell'},{k:'Titan One',l:'TT Polls'},{k:'Yeseva One',l:'Romman'},
+    {k:'Russo One',l:'Yodnam'},{k:'Rye',l:'Lucky Bones'},
+  ]},
+  {label:'Elegante', fonts:[
+    {k:'Cinzel Decorative',l:'Sk Moralist'},{k:'Medula One',l:'Medula'},{k:'Poiret One',l:'Nove'},
+    {k:'IM Fell English',l:'Jayagiri'},{k:'Quicksand',l:'Art Nuvo'},
+  ]},
+];
+
+function applyAdminTheme(theme){
+  const root = document.documentElement;
+  Object.entries(theme).forEach(([k,v]) => root.style.setProperty(k,v));
+}
+
+function loadAdminSettings(){
+  try{
+    const raw = localStorage.getItem(ADMIN_STORAGE_KEY);
+    if(!raw) return;
+    const s = JSON.parse(raw);
+    if(s.theme)                        applyAdminTheme(s.theme);
+    if(s.colors  && s.colors.length)   COLORS_LIST       = s.colors;
+    if(s.fontTabs && s.fontTabs.length) FONT_TABS         = s.fontTabs;
+    if(s.walls   && s.walls.length)    WALLS_LIST        = s.walls;
+    if(s.prices  && s.prices.length)   PRICE_TIERS       = s.prices;
+    if(typeof s.controllerPrice === 'number') CONTROLLER_PRICE = s.controllerPrice;
+  }catch(e){ console.warn('Admin settings error:', e); }
+}
+
+function buildColorGrid(){
+  const grid = document.getElementById('colorGrid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  COLORS_LIST.forEach((col,i) => {
+    const sw = document.createElement('div');
+    sw.className = 'cswatch'+(i===0?' on':'');
+    sw.style.background = col.c;
+    sw.dataset.c = col.c;
+    sw.dataset.n = col.n;
+    grid.appendChild(sw);
+  });
+  if(COLORS_LIST.length){
+    S.color = COLORS_LIST[0].c;
+    const lbl = document.getElementById('colorLabel');
+    if(lbl) lbl.textContent = COLORS_LIST[0].n;
+  }
+  // Rebuild char menu color swatches
+  const sub = document.getElementById('cmenuColorSub');
+  if(sub){
+    sub.innerHTML = '';
+    COLORS_LIST.forEach(col=>{
+      const sw=document.createElement('div');sw.className='cmenu-csw';
+      sw.style.background=col.c;sw.title=col.n;sw.dataset.color=col.c;
+      sub.appendChild(sw);
+    });
+  }
+}
+
+function buildWallGrid(){
+  const grid = document.getElementById('wallGrid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  WALLS_LIST.forEach((wall,i) => {
+    const btn = document.createElement('div');
+    btn.className = 'wbtn'+(i===0?' on':'');
+    btn.style.backgroundImage = `url('${wall.thumb||wall.url}')`;
+    btn.dataset.url = wall.url;
+    btn.dataset.ov  = wall.overlay;
+    const span = document.createElement('span');
+    span.textContent = wall.label;
+    btn.appendChild(span);
+    grid.appendChild(btn);
+  });
+  if(WALLS_LIST.length){
+    const first = WALLS_LIST[0];
+    previewCanvas.style.backgroundImage = `url('${first.url}')`;
+    overlay.style.background = `rgba(0,0,0,${first.overlay})`;
+  }
+}
+
+function buildFontTrack(){
+  const track  = document.getElementById('fontTrack');
+  const tabBar = document.getElementById('fontTabBar');
+  if(!track||!tabBar) return;
+  track.innerHTML  = '';
+  tabBar.innerHTML = '';
+  FONT_TABS.forEach((tab,ti) => {
+    const btn = document.createElement('button');
+    btn.className = 'ftab'+(ti===0?' on':'');
+    btn.dataset.fi = ti;
+    btn.textContent = tab.label;
+    tabBar.appendChild(btn);
+    const panel = document.createElement('div');
+    panel.className = 'font-panel';
+    const fg = document.createElement('div');
+    fg.className = 'font-grid';
+    tab.fonts.forEach(font => {
+      const fbtn = document.createElement('div');
+      fbtn.className = 'fbtn'+(font.k===S.font?' on':'');
+      fbtn.dataset.font = font.k;
+      fbtn.style.fontFamily = `'${font.k}',cursive`;
+      fbtn.textContent = font.l||font.k;
+      fg.appendChild(fbtn);
+    });
+    panel.appendChild(fg);
+    track.appendChild(panel);
+  });
+  // Sync FONTS_LIST (used by char editor carousel) from FONT_TABS
+  FONTS_LIST = FONT_TABS.flatMap(tab => tab.fonts.map(f=>({k:f.k,l:f.l||f.k})));
+}
 
 let lastQuoteTier = -1; // track tier changes for animation
 
@@ -351,14 +486,9 @@ function applyMount(){
 }
 
 // ── Char editor ──
-const FONTS_LIST=[
-  {k:'Pacifico',l:'Pacifico'},{k:'Courgette',l:'Courgette'},{k:'Yellowtail',l:'Yellowtail'},
-  {k:'Cookie',l:'Cookie'},{k:'Kaushan Script',l:'Kaushan'},{k:'Dancing Script',l:'Dancing'},
-  {k:'Great Vibes',l:'Great Vibes'},{k:'Sacramento',l:'Sacramento'},{k:'Lobster',l:'Lobster'},
-  {k:'Rock Salt',l:'Rock Salt'},{k:'Amatic SC',l:'Amatic SC'},{k:'Comfortaa',l:'Comfortaa'},
-  {k:'Nunito',l:'Nunito'},{k:'Raleway',l:'Raleway'},{k:'Righteous',l:'Righteous'},
-];
-const COLORS_LIST=[
+// Populated at init by buildFontTrack() / loadAdminSettings()
+let FONTS_LIST=[];
+let COLORS_LIST=[
   {c:'#b3f0ff',n:'Azul Hielo'},{c:'#ff2222',n:'Roja'},{c:'#ffb300',n:'Amber'},
   {c:'#e8ff00',n:'Amarillo Limón'},{c:'#bf00ff',n:'Morado'},{c:'#00ff88',n:'Verde'},
   {c:'#ffe8c0',n:'Blanco Cálido'},{c:'#3b82f6',n:'Azul'},{c:'#ff3cac',n:'Rosa'},
@@ -369,9 +499,6 @@ const cmenuFontName=document.getElementById('cmenuFontName');
 const cmenuColorBtn=document.getElementById('cmenuColorBtn');
 const cmenuColorSub=document.getElementById('cmenuColorSub');
 let activeCharIdx=null,cmenuFontIdx=0;
-COLORS_LIST.forEach(col=>{
-  const sw=document.createElement('div');sw.className='cmenu-csw';sw.style.background=col.c;sw.title=col.n;sw.dataset.color=col.c;cmenuColorSub.appendChild(sw);
-});
 function openCharMenu(spanEl){
   const idx=parseInt(spanEl.dataset.idx);activeCharIdx=idx;
   neonEl.querySelectorAll('.nchar.selected').forEach(s=>s.classList.remove('selected'));spanEl.classList.add('selected');
@@ -483,11 +610,6 @@ document.getElementById('fontTrack').addEventListener('click',e=>{
   document.querySelectorAll('#fontTrack .fbtn').forEach(x=>x.classList.remove('on'));
   b.classList.add('on');S.font=b.dataset.font;recalcFontSize();dots();
   if(S.mount==='acrilico-redondo')applyMount();
-});
-document.getElementById('fontGrid').addEventListener('click',e=>{
-  const b=e.target.closest('.fbtn');if(!b)return;
-  document.querySelectorAll('.fbtn').forEach(x=>x.classList.remove('on'));b.classList.add('on');S.font=b.dataset.font;
-  recalcFontSize();dots();
 });
 document.getElementById('colorGrid').addEventListener('click',e=>{
   const s=e.target.closest('.cswatch');if(!s)return;
@@ -841,5 +963,7 @@ document.getElementById('quotePanel').addEventListener('pointerdown', e => e.sto
 })();
 
 // ── Init ──
+loadAdminSettings();
+buildFontTrack(); buildColorGrid(); buildWallGrid();
 canonicalCanvasW = previewCanvas.offsetWidth || 800;
 recalcFontSize(); scheduleHint(); dots(); initMobileSheet(); updateDimBadge();

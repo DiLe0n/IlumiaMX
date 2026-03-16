@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acceso Admin — IlumiaMX</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;font-family:'Segoe UI',Arial,sans-serif;}
+  body{
+    display:flex;align-items:center;justify-content:center;
+    min-height:100vh;
+    background:linear-gradient(145deg,#111 0%,#1e1c1a 50%,#111 100%);
+    position:relative;overflow:hidden;
+  }
+  body::before{
+    content:'';position:absolute;inset:0;
+    background:
+      radial-gradient(ellipse 60% 50% at 30% 40%,rgba(179,240,255,.06) 0%,transparent 70%),
+      radial-gradient(ellipse 40% 60% at 75% 70%,rgba(255,60,172,.05) 0%,transparent 70%);
+    pointer-events:none;
+  }
+  .card{
+    background:#fff;border-radius:20px;padding:44px 48px;width:380px;
+    box-shadow:0 32px 80px rgba(0,0,0,.5);position:relative;text-align:center;
+  }
+  .logo{
+    font-size:1.6rem;font-weight:800;letter-spacing:5px;text-transform:uppercase;
+    margin-bottom:4px;
+  }
+  .logo em{color:#555;font-style:normal;}
+  .sub{
+    font-size:.6rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;
+    color:#aaa;margin-bottom:32px;
+  }
+  .desc{font-size:.85rem;color:#666;margin-bottom:24px;line-height:1.5;}
+  .btn-login{
+    width:100%;padding:13px 0;background:#1a1918;color:#fff;border:none;
+    border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;
+    transition:.2s;font-family:inherit;letter-spacing:.3px;
+  }
+  .btn-login:hover{background:#333;transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,.2);}
+  .btn-login:active{transform:none;box-shadow:none;}
+  .error{
+    font-size:.8rem;color:#dc2626;margin-top:14px;padding:9px 13px;
+    border-radius:8px;background:#fff5f5;border:1px solid #fecaca;display:none;
+  }
+  .error.show{display:block;}
+</style>
+<!-- Netlify Identity Widget -->
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+</head>
+<body>
+<div class="card">
+  <div class="logo">ILUMIA<em>MX</em></div>
+  <div class="sub">Panel Administrativo</div>
+  <p class="desc">Inicia sesión con tu cuenta de administrador para continuar.</p>
+  <button class="btn-login" id="btnAcceso">Iniciar sesión</button>
+  <div class="error" id="errorMsg">No tienes permisos de administrador.</div>
+</div>
+
+<script>
+  // Si ya hay sesión válida con rol admin, redirigir directo
+  netlifyIdentity.on('init', user => {
+    if (user) window.location.replace('/adminpanel');
+  });
+
+  // Después de login exitoso, redirigir al panel
+  // El CDN validará el JWT; si no tiene rol "admin" regresará aquí
+  netlifyIdentity.on('login', user => {
+    const roles = user?.app_metadata?.roles || [];
+    if (roles.includes('admin')) {
+      window.location.replace('/adminpanel');
+    } else {
+      netlifyIdentity.logout();
+      document.getElementById('errorMsg').classList.add('show');
+    }
+  });
+
+  netlifyIdentity.on('error', () => {
+    document.getElementById('errorMsg').textContent = 'Error al conectar con el servicio de autenticación.';
+    document.getElementById('errorMsg').classList.add('show');
+  });
+
+  document.getElementById('btnAcceso').addEventListener('click', () => {
+    netlifyIdentity.open('login');
+  });
+</script>
+</body>
+</html>

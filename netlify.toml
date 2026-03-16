@@ -1,0 +1,44 @@
+# ── Build ────────────────────────────────────────────────────────
+[build]
+  publish = "."
+
+# ── Admin panel: CDN-level access control ────────────────────────
+# The Netlify CDN validates the signed nf_jwt cookie BEFORE serving
+# the file. No valid "admin" role in the token → redirect to login.
+# This cannot be bypassed from the browser or DevTools.
+
+# /adminpanel  (pretty URL)
+[[redirects]]
+  from   = "/adminpanel"
+  to     = "/adminpanel/index.html"
+  status = 200
+  conditions = {Role = ["admin"]}
+
+[[redirects]]
+  from   = "/adminpanel"
+  to     = "/adminpanel/acceso"
+  status = 302
+
+# /adminpanel/  (trailing slash)
+[[redirects]]
+  from   = "/adminpanel/"
+  to     = "/adminpanel/index.html"
+  status = 200
+  conditions = {Role = ["admin"]}
+
+[[redirects]]
+  from   = "/adminpanel/"
+  to     = "/adminpanel/acceso"
+  status = 302
+
+# /adminpanel/index.html  (direct file path)
+[[redirects]]
+  from   = "/adminpanel/index.html"
+  to     = "/adminpanel/index.html"
+  status = 200
+  conditions = {Role = ["admin"]}
+
+[[redirects]]
+  from   = "/adminpanel/index.html"
+  to     = "/adminpanel/acceso"
+  status = 302

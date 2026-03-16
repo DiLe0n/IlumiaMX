@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Admin — IlumiaMX</title>
+<link href="https://fonts.googleapis.com/css2?family=Allura&family=Alex+Brush&family=Amatic+SC:wght@400;700&family=Baloo+2:wght@700&family=Boogaloo&family=Cinzel+Decorative&family=Comfortaa:wght@300&family=Cookie&family=Courgette&family=Crafty+Girls&family=Dancing+Script:wght@400;700&family=Fredoka+One&family=Great+Vibes&family=IM+Fell+English:ital@1&family=Italianno&family=Kaushan+Script&family=Limelight&family=Lobster&family=Mea+Culpa&family=Medula+One&family=Mr+De+Haviland&family=Nunito:wght@300&family=Orbitron:wght@400&family=Pacifico&family=Parisienne&family=Permanent+Marker&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poiret+One&family=Quicksand:wght@600&family=Raleway:wght@300&family=Redressed&family=Righteous&family=Rock+Salt&family=Russo+One&family=Sacramento&family=Satisfy&family=Shantell+Sans:wght@600&family=Titan+One&family=Yellowtail&family=Yeseva+One&family=Rye&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="admin.css">
+<!-- Netlify Identity Widget (needed for logout + defense-in-depth check) -->
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+</head>
+<body>
+
+<!-- ── PANEL ──────────────────────────────────────── -->
+<div id="adminPanel" class="admin-panel">
+
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <span class="brand-logo">ILUMIA<em>MX</em></span>
+      <span class="brand-badge">Admin</span>
+    </div>
+    <div class="topbar-actions">
+      <a href="/" class="tbtn tbtn-ghost">← Ver app</a>
+      <button id="btnReset" class="tbtn tbtn-ghost">Restablecer</button>
+      <button id="btnSave"  class="tbtn tbtn-save">Guardar cambios</button>
+      <button id="btnLogout" class="tbtn tbtn-logout">Salir</button>
+    </div>
+  </header>
+
+  <!-- Workspace: sidebar + content -->
+  <div class="workspace">
+
+    <!-- Sidebar -->
+    <nav class="sidebar" id="navTabs">
+      <div class="sidebar-section-label">Configuración</div>
+      <button class="ntab active" data-tab="tema">
+        <span class="ntab-icon">◐</span>Tema
+      </button>
+      <button class="ntab" data-tab="colores">
+        <span class="ntab-icon">●</span>Colores Neón
+      </button>
+      <button class="ntab" data-tab="fuentes">
+        <span class="ntab-icon">A</span>Tipografías
+      </button>
+      <button class="ntab" data-tab="imagenes">
+        <span class="ntab-icon">▣</span>Imágenes
+      </button>
+      <button class="ntab" data-tab="precios">
+        <span class="ntab-icon">$</span>Precios
+      </button>
+    </nav>
+
+    <!-- Main content -->
+    <main class="content">
+
+      <!-- ── TEMA ── -->
+      <section class="tab-section active" data-tab="tema">
+        <div class="page-header">
+          <div>
+            <h1>Tema visual</h1>
+            <p>Personaliza los colores de la interfaz que ven los clientes.</p>
+          </div>
+        </div>
+        <div class="tema-layout">
+          <div class="theme-grid" id="themeGrid"></div>
+          <div class="preview-box" id="themePreview">
+            <div class="prev-label-top">Vista previa</div>
+            <div class="prev-panel">
+              <div class="prev-header">Cotizador de anuncios</div>
+              <div class="prev-block">
+                <div class="prev-label">TU TEXTO</div>
+                <div class="prev-textarea">Aquí tu texto...</div>
+              </div>
+              <div class="prev-block">
+                <div class="prev-label">COLOR DEL NEÓN</div>
+                <div class="prev-swatches">
+                  <div class="prev-sw" style="background:#b3f0ff"></div>
+                  <div class="prev-sw" style="background:#ff2222"></div>
+                  <div class="prev-sw" style="background:#ffb300"></div>
+                  <div class="prev-sw active-sw" style="background:#bf00ff"></div>
+                  <div class="prev-sw" style="background:#00ff88"></div>
+                </div>
+              </div>
+              <div class="prev-block">
+                <div class="prev-label">TIPOGRAFÍA</div>
+                <div class="prev-font-row">
+                  <div class="prev-fbtn prev-fbtn-on">Pacifico</div>
+                  <div class="prev-fbtn">Balsamic</div>
+                  <div class="prev-fbtn">Howell</div>
+                </div>
+              </div>
+            </div>
+            <div class="prev-canvas">
+              <span class="prev-neon">Neon</span>
+              <div class="prev-price-badge">$1,600 MXN</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── NEÓN ── -->
+      <section class="tab-section" data-tab="colores">
+        <div class="page-header">
+          <div>
+            <h1>Colores de neón</h1>
+            <p>Define la paleta de colores disponibles para los clientes.</p>
+          </div>
+          <button class="btn-add" id="btnAddColor">+ Agregar color</button>
+        </div>
+        <div id="colorsList" class="colors-grid"></div>
+      </section>
+
+      <!-- ── FUENTES ── -->
+      <section class="tab-section" data-tab="fuentes">
+        <div class="page-header">
+          <div>
+            <h1>Tipografías</h1>
+            <p>Administra las fuentes por categoría. Los clientes las ven en esos grupos.</p>
+          </div>
+        </div>
+        <div id="fontTabsAdmin" class="font-tabs-admin"></div>
+      </section>
+
+      <!-- ── IMÁGENES ── -->
+      <section class="tab-section" data-tab="imagenes">
+        <div class="page-header">
+          <div>
+            <h1>Fondos de ambiente</h1>
+            <p>Imágenes de pared que simulan el espacio donde irá el letrero.</p>
+          </div>
+          <button class="btn-add" id="btnAddWall">+ Agregar imagen</button>
+        </div>
+        <div id="wallsList" class="walls-grid"></div>
+      </section>
+
+      <!-- ── PRECIOS ── -->
+      <section class="tab-section" data-tab="precios">
+        <div class="page-header">
+          <div>
+            <h1>Precios</h1>
+            <p>Niveles de precio según el área del letrero en cm².</p>
+          </div>
+          <button class="btn-add" id="btnAddPrice">+ Agregar nivel</button>
+        </div>
+        <div class="prices-layout">
+          <div class="prices-left">
+            <div class="prices-table-wrap">
+              <table class="prices-table">
+                <thead>
+                  <tr>
+                    <th>Tamaño</th>
+                    <th>Área máx (cm²)</th>
+                    <th>Precio (MXN)</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="pricesList"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="prices-right">
+            <div class="controller-card">
+              <div class="ctrl-icon">📡</div>
+              <div class="ctrl-info">
+                <strong>Controlador RF</strong>
+                <span>Precio adicional cuando el cliente activa el control inalámbrico</span>
+              </div>
+              <div class="ctrl-input-wrap">
+                <span>$</span>
+                <input type="number" id="controllerPriceInput" min="0" step="1">
+                <span class="ctrl-currency">MXN</span>
+              </div>
+            </div>
+            <div class="price-info-card">
+              <p>💡 Los precios se calculan automáticamente según el área del letrero (ancho × alto en cm²). Si el letrero supera el mayor nivel, se muestra una opción de cotización especial.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div><!-- /workspace -->
+</div><!-- /adminPanel -->
+
+<div id="toast" class="toast" hidden></div>
+
+<script>
+  // ── Defense-in-depth: if Identity has no valid session, bounce to login.
+  // The CDN redirect is the primary barrier; this is a secondary check.
+  netlifyIdentity.on('init', user => {
+    if (!user) window.location.replace('/adminpanel/acceso.html');
+  });
+</script>
+<script src="admin.js"></script>
+</body>
+</html>
