@@ -306,5 +306,13 @@
 </div>
 <script src="script.js"></script>
 <script src="export-pdf.js"></script>
+
+<!-- Netlify Identity: intercepts invite/recovery tokens that land on this page -->
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script>
+  netlifyIdentity.on('login', () => {
+    window.location.replace('/adminpanel');
+  });
+</script>
 </body>
 </html>
