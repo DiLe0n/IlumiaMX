@@ -307,12 +307,22 @@
 <script src="script.js"></script>
 <script src="export-pdf.js"></script>
 
-<!-- Netlify Identity: intercepts invite/recovery tokens that land on this page -->
-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<!-- Netlify Identity: only loaded when an invite/recovery token is present in the URL.
+     Without a token this block does nothing and the cotizador loads normally. -->
 <script>
-  netlifyIdentity.on('login', () => {
-    window.location.replace('/adminpanel');
-  });
+  (function(){
+    var hash = window.location.hash || '';
+    if(hash.match(/\b(invite_token|recovery_token|confirmation_token)=/)){
+      var s = document.createElement('script');
+      s.src = 'https://identity.netlify.com/v1/netlify-identity-widget.js';
+      s.onload = function(){
+        netlifyIdentity.on('login', function(){
+          window.location.replace('/adminpanel');
+        });
+      };
+      document.head.appendChild(s);
+    }
+  })();
 </script>
 </body>
 </html>
