@@ -206,6 +206,9 @@ function initNav(){
   document.getElementById('btnReset').addEventListener('click', resetSettings);
   document.getElementById('btnLogout').addEventListener('click', () => {
     netlifyIdentity.logout();
+  });
+  // Redirect only after Identity has fully cleared the session
+  netlifyIdentity.on('logout', () => {
     window.location.replace('/adminpanel/acceso.html');
   });
 }
